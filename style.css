@@ -740,6 +740,78 @@ body {
     }
 }
 
+/* Loja */
+.loja-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.loja-item {
+    background: white;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 15px;
+    text-align: center;
+    transition: all 0.3s;
+    cursor: pointer;
+}
+
+.loja-item:hover {
+    border-color: #667eea;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+    transform: translateY(-2px);
+}
+
+.loja-item-icon {
+    font-size: 2.5em;
+    margin-bottom: 10px;
+}
+
+.loja-item-name {
+    font-weight: bold;
+    color: #2d3748;
+    margin-bottom: 8px;
+    font-size: 1.1em;
+}
+
+.loja-item-description {
+    font-size: 0.9em;
+    color: #718096;
+    margin-bottom: 12px;
+    min-height: 30px;
+}
+
+.loja-item-price {
+    font-size: 1.3em;
+    font-weight: bold;
+    margin: 10px 0;
+    color: #f5576c;
+}
+
+.loja-item-button {
+    width: 100%;
+    padding: 10px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.loja-item-button:hover {
+    transform: scale(1.05);
+}
+
+.loja-item-button:disabled {
+    background: #cbd5e0;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .players-section {
@@ -765,5 +837,9 @@ body {
 
     .title {
         font-size: 2em;
+    }
+
+    .loja-grid {
+        grid-template-columns: 1fr;
     }
 }

@@ -499,6 +499,104 @@ function checkAchievements(playerId) {
     });
 }
 
+// Shop Items Database
+const SHOP_ITEMS = [
+    { id: 1, name: '🍕 Pizza Night', description: 'Noite romantica com pizza', cost: 50, icon: '🍕' },
+    { id: 2, name: '🎬 Cinema Data', description: 'Sessao de cinema ao lado dela/dele', cost: 40, icon: '🎬' },
+    { id: 3, name: '💐 Flores', description: 'Um buque lindo de flores', cost: 30, icon: '💐' },
+    { id: 4, name: '🎁 Presente Surpresa', description: 'Uma surpresa especial', cost: 60, icon: '🎁' },
+    { id: 5, name: '🏖️ Viagem Fds', description: 'Uma viagem no proximo fim de semana', cost: 100, icon: '🏖️' },
+    { id: 6, name: '💅 Spa Day', description: 'Dia de spa para relaxar', cost: 80, icon: '💅' },
+    { id: 7, name: '🎵 Musica Ao Vivo', description: 'Show musical especial', cost: 70, icon: '🎵' },
+    { id: 8, name: '🍽️ Jantar Gourmet', description: 'Jantar fine dining', cost: 90, icon: '🍽️' }
+];
+
+// Shop Functions
+function updatePlayerCoinsDisplay() {
+    const currentPlayer = getCurrentPlayer();
+    if (!currentPlayer) return;
+    
+    const userCoinsDisplay = document.getElementById('userCoinsDisplay');
+    const playerData = gameState[`player${currentPlayer.id}`];
+    
+    if (userCoinsDisplay) {
+        userCoinsDisplay.textContent = playerData.coins;
+    }
+}
+
+function renderLoja() {
+    const lojaItemsContainer = document.getElementById('loja-items');
+    const currentPlayer = getCurrentPlayer();
+    
+    if (!currentPlayer) {
+        lojaItemsContainer.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">❌ Você precisa estar autenticado</p>';
+        return;
+    }
+    
+    const playerCoins = gameState[`player${currentPlayer.id}`].coins;
+    
+    lojaItemsContainer.innerHTML = SHOP_ITEMS.map(item => {
+        const canAfford = playerCoins >= item.cost;
+        return `
+            <div class="loja-item">
+                <div class="loja-item-icon">${item.icon}</div>
+                <div class="loja-item-name">${item.name}</div>
+                <div class="loja-item-description">${item.description}</div>
+                <div class="loja-item-price">${item.cost}⭐</div>
+                <button class="loja-item-button" onclick="purchaseItem(${item.id}, ${item.cost})" ${!canAfford ? 'disabled' : ''}>
+                    ${canAfford ? 'Comprar' : 'Moedas insuficientes'}
+                </button>
+            </div>
+        `;
+    }).join('');
+}
+
+function purchaseItem(itemId, itemCost) {
+    const currentPlayer = getCurrentPlayer();
+    
+    if (!currentPlayer) {
+        showToast('❌ Você precisa estar autenticado');
+        return;
+    }
+    
+    const item = SHOP_ITEMS.find(i => i.id === itemId);
+    if (!item) {
+        showToast('❌ Item não encontrado');
+        return;
+    }
+    
+    const playerId = `player${currentPlayer.id}`;
+    const playerData = gameState[playerId];
+    
+    if (playerData.coins < itemCost) {
+        showToast('❌ Moedas insuficientes!');
+        return;
+    }
+    
+    // Deduzir moedas do jogador autenticado
+    playerData.coins -= itemCost;
+    saveGame();
+    
+    // Registrar compra no histórico
+    addHistory(`${currentPlayer.name} comprou ${item.name} por ${itemCost}⭐`);
+    
+    // Sincronizar with Supabase
+    if (USE_SUPABASE && supabase) {
+        const roomId = getRoomId();
+        supabase.updatePlayer(roomId, currentPlayer.id, {
+            coins: playerData.coins
+        })
+            .then(() => {
+                console.log('✅ Compra sincronizada com Supabase');
+            })
+            .catch(e => console.error('❌ ERRO ao sincronizar compra:', e));
+    }
+    
+    updatePlayerCoinsDisplay();
+    renderLoja();
+    showToast(`🎉 ${currentPlayer.name} comprou ${item.name}! 🛍️`);
+}
+
 function renderAchievements() {
     const allAchievements = document.getElementById('achievements-grid');
     let html = '<h3 style="grid-column: 1/-1;">Meus Achievements</h3>';
@@ -591,6 +689,8 @@ function renderAll() {
     renderChallenges();
     renderHistory();
     renderAchievements();
+    updatePlayerCoinsDisplay();
+    renderLoja();
 }
 
 // Close modal on outside click

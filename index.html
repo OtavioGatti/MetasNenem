@@ -88,6 +88,7 @@
         <nav class="nav-tabs">
             <button class="tab-btn active" onclick="switchTab('tarefas')">📋 Tarefas</button>
             <button class="tab-btn" onclick="switchTab('casal')">💑 Casal</button>
+            <button class="tab-btn" onclick="switchTab('loja')">🛍️ Loja</button>
             <button class="tab-btn" onclick="switchTab('historico')">📊 Histórico</button>
             <button class="tab-btn" onclick="switchTab('achievements')">🏆 Achievements</button>
         </nav>
@@ -124,6 +125,19 @@
             <section id="achievements" class="tab-content">
                 <h2>Achievements Desbloqueados</h2>
                 <div class="achievements-grid" id="achievements-grid"></div>
+            </section>
+
+            <!-- Loja Tab -->
+            <section id="loja" class="tab-content">
+                <h2>🛍️ Loja de Recompensas</h2>
+                <div id="playerCoinsDisplay" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 15px; border-radius: 8px; margin-bottom: 20px; color: white; font-weight: bold; text-align: center;">
+                    Seus Coins: <span id="userCoinsDisplay">0</span>⭐
+                </div>
+                <div id="loja-items" class="loja-grid"></div>
+                <div id="lojaEmpty" style="text-align: center; padding: 40px; color: #999;">
+                    <p>🎁 Em breve, mais itens disponíveis!</p>
+                    <p style="font-size: 0.9em;">Configure os itens da loja para começar a gastar seus coins</p>
+                </div>
             </section>
         </main>
 

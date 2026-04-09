@@ -178,16 +178,10 @@ function createTask() {
     gameState.tasks.push(task);
     saveGame();
     
-    // Sincronizar com Supabase
+    // Sincronizar com Supabase (não espera resposta)
     if (USE_SUPABASE && supabase) {
-        supabase.createTask(getRoomId(), task).then((createdTask) => {
-            // Atualizar o task local com o ID real do Supabase
-            task.id = createdTask.id;
-            saveGame();
-            console.log('✅ Tarefa sincronizada com Supabase, ID:', createdTask.id);
-        }).catch(err => {
-            console.error('❌ ERRO ao criar tarefa no Supabase:', err);
-        });
+        supabase.createTask(getRoomId(), task)
+            .catch(err => console.error('\u274c ERRO ao criar tarefa no Supabase:', err));
     }
     
     renderTasks();
@@ -308,16 +302,10 @@ function createChallenge() {
     gameState.challenges.push(challenge);
     saveGame();
     
-    // Sincronizar com Supabase
+    // Sincronizar com Supabase (não espera resposta)
     if (USE_SUPABASE && supabase) {
-        supabase.createChallenge(getRoomId(), challenge).then((createdChallenge) => {
-            // Atualizar challenge local com ID real do Supabase
-            challenge.id = createdChallenge.id;
-            saveGame();
-            console.log('✅ Desafio sincronizado com Supabase, ID:', createdChallenge.id);
-        }).catch(err => {
-            console.error('❌ ERRO ao criar desafio no Supabase:', err);
-        });
+        supabase.createChallenge(getRoomId(), challenge)
+            .catch(err => console.error('\u274c ERRO ao criar desafio no Supabase:', err));
     }
     
     renderChallenges();

@@ -73,29 +73,36 @@ class SupabaseManager {
     }
 
     async createTask(roomId, taskData) {
-        const response = await fetch(
-            `${this.url}/rest/v1/tasks`,
-            {
-                method: 'POST',
-                headers: {
-                    ...this.headers,
-                    'Prefer': 'return=representation'  // Retorna objeto criado com UUID
-                },
-                body: JSON.stringify({
-                    room_id: roomId,
-                    description: taskData.description,
-                    coins: taskData.coins,
-                    type: taskData.type,
-                    assigned: taskData.assigned,
-                    completed: false
-                })
+        try {
+            const response = await fetch(
+                `${this.url}/rest/v1/tasks`,
+                {
+                    method: 'POST',
+                    headers: {
+                        ...this.headers,
+                        'Prefer': 'return=minimal'
+                    },
+                    body: JSON.stringify({
+                        room_id: roomId,
+                        description: taskData.description,
+                        coins: taskData.coins,
+                        type: taskData.type,
+                        assigned: taskData.assigned,
+                        completed: false
+                    })
+                }
+            );
+            
+            if (!response.ok) {
+                throw new Error(`POST /tasks failed: ${response.status}`);
             }
-        );
-        if (response.ok) {
-            const created = await response.json();
-            return created[0];  // Retorna o objeto criado com UUID
+            
+            console.log('✅ Tarefa criada no Supabase');
+            return { success: true };
+        } catch (err) {
+            console.error('Erro em createTask:', err);
+            throw err;
         }
-        throw new Error(`POST /tasks failed: ${response.status}`);
     }
 
     async updateTask(taskId, updates) {
@@ -140,28 +147,35 @@ class SupabaseManager {
     }
 
     async createChallenge(roomId, challengeData) {
-        const response = await fetch(
-            `${this.url}/rest/v1/challenges`,
-            {
-                method: 'POST',
-                headers: {
-                    ...this.headers,
-                    'Prefer': 'return=representation'  // Retorna objeto criado com UUID
-                },
-                body: JSON.stringify({
-                    room_id: roomId,
-                    description: challengeData.description,
-                    coins: challengeData.coins,
-                    difficulty: challengeData.difficulty,
-                    completed: false
-                })
+        try {
+            const response = await fetch(
+                `${this.url}/rest/v1/challenges`,
+                {
+                    method: 'POST',
+                    headers: {
+                        ...this.headers,
+                        'Prefer': 'return=minimal'
+                    },
+                    body: JSON.stringify({
+                        room_id: roomId,
+                        description: challengeData.description,
+                        coins: challengeData.coins,
+                        difficulty: challengeData.difficulty,
+                        completed: false
+                    })
+                }
+            );
+            
+            if (!response.ok) {
+                throw new Error(`POST /challenges failed: ${response.status}`);
             }
-        );
-        if (response.ok) {
-            const created = await response.json();
-            return created[0];  // Retorna o objeto criado com UUID
+            
+            console.log('✅ Desafio criado no Supabase');
+            return { success: true };
+        } catch (err) {
+            console.error('Erro em createChallenge:', err);
+            throw err;
         }
-        throw new Error(`POST /challenges failed: ${response.status}`);
     }
 
     async updateChallenge(challengeId, updates) {

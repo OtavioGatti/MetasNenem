@@ -79,7 +79,7 @@ class SupabaseManager {
                 method: 'POST',
                 headers: {
                     ...this.headers,
-                    'Prefer': 'return=minimal'
+                    'Prefer': 'return=representation'  // Retorna objeto criado com UUID
                 },
                 body: JSON.stringify({
                     room_id: roomId,
@@ -91,8 +91,10 @@ class SupabaseManager {
                 })
             }
         );
-        // POST com 'return=minimal' retorna 201 sem corpo
-        if (response.ok) return { success: true };
+        if (response.ok) {
+            const created = await response.json();
+            return created[0];  // Retorna o objeto criado com UUID
+        }
         throw new Error(`POST /tasks failed: ${response.status}`);
     }
 
@@ -144,7 +146,7 @@ class SupabaseManager {
                 method: 'POST',
                 headers: {
                     ...this.headers,
-                    'Prefer': 'return=minimal'
+                    'Prefer': 'return=representation'  // Retorna objeto criado com UUID
                 },
                 body: JSON.stringify({
                     room_id: roomId,
@@ -155,7 +157,10 @@ class SupabaseManager {
                 })
             }
         );
-        if (response.ok) return { success: true };
+        if (response.ok) {
+            const created = await response.json();
+            return created[0];  // Retorna o objeto criado com UUID
+        }
         throw new Error(`POST /challenges failed: ${response.status}`);
     }
 

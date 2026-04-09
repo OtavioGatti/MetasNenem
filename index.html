@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MetasNenem - Desafios do Casal</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="config.js"></script>
+    <script src="supabase.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1 class="title">💕 MetasNenem</h1>
+                <p class="subtitle">Desafios e Metas do Casal</p>
+            </div>
+            <button class="btn-settings" onclick="toggleSettings()">⚙️</button>
+        </header>
+
+        <!-- Room Connection -->
+        <section id="roomSection" class="room-section">
+            <div class="room-info">
+                <span id="syncStatus">🔄 Conectando...</span>
+                <button onclick="toggleRoomModal()" class="btn-room">🔗 Sala</button>
+            </div>
+        </section>
+
+        <!-- Players Section -->
+        <section class="players-section">
+            <div class="player-card" id="player1">
+                <div class="player-header">
+                    <div class="player-avatar" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <span id="player1-initial">V</span>
+                    </div>
+                    <h2 id="player1-name">Você</h2>
+                </div>
+                <div class="player-stats">
+                    <div class="stat">
+                        <span class="stat-label">Moedas</span>
+                        <span class="stat-value coins" id="player1-coins">0</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Nível</span>
+                        <span class="stat-value level" id="player1-level">1</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Streak</span>
+                        <span class="stat-value streak" id="player1-streak">0🔥</span>
+                    </div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="player1-progress"></div>
+                </div>
+            </div>
+
+            <div class="vs">VS</div>
+
+            <div class="player-card" id="player2">
+                <div class="player-header">
+                    <div class="player-avatar" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                        <span id="player2-initial">K</span>
+                    </div>
+                    <h2 id="player2-name">Namorada</h2>
+                </div>
+                <div class="player-stats">
+                    <div class="stat">
+                        <span class="stat-label">Moedas</span>
+                        <span class="stat-value coins" id="player2-coins">0</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Nível</span>
+                        <span class="stat-value level" id="player2-level">1</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Streak</span>
+                        <span class="stat-value streak" id="player2-streak">0🔥</span>
+                    </div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="player2-progress"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Navigation Tabs -->
+        <nav class="nav-tabs">
+            <button class="tab-btn active" onclick="switchTab('tarefas')">📋 Tarefas</button>
+            <button class="tab-btn" onclick="switchTab('casal')">💑 Casal</button>
+            <button class="tab-btn" onclick="switchTab('historico')">📊 Histórico</button>
+            <button class="tab-btn" onclick="switchTab('achievements')">🏆 Achievements</button>
+        </nav>
+
+        <!-- Tabs Content -->
+        <main class="content">
+            <!-- Tarefas Tab -->
+            <section id="tarefas" class="tab-content active">
+                <h2>Tarefas Disponíveis</h2>
+                <div class="filters">
+                    <button class="filter-btn active" onclick="filterTasks('all')">Todas</button>
+                    <button class="filter-btn" onclick="filterTasks('pessoal')">Pessoal</button>
+                    <button class="filter-btn" onclick="filterTasks('casal')">Casal</button>
+                    <button class="filter-btn" onclick="filterTasks('concluido')">Concluído</button>
+                </div>
+                <div class="tasks-list" id="tasks-list"></div>
+                <button class="btn-novo" onclick="openNewTaskModal()">+ Nova Tarefa</button>
+            </section>
+
+            <!-- Casal Tab -->
+            <section id="casal" class="tab-content">
+                <h2>Desafios do Casal</h2>
+                <div class="couple-challenges" id="couple-challenges"></div>
+                <button class="btn-novo" onclick="openNewChallengeModal()">+ Novo Desafio</button>
+            </section>
+
+            <!-- Histórico Tab -->
+            <section id="historico" class="tab-content">
+                <h2>Histórico de Atividades</h2>
+                <div class="timeline" id="timeline"></div>
+            </section>
+
+            <!-- Achievements Tab -->
+            <section id="achievements" class="tab-content">
+                <h2>Achievements Desbloqueados</h2>
+                <div class="achievements-grid" id="achievements-grid"></div>
+            </section>
+        </main>
+
+        <!-- Settings Modal -->
+        <div id="settingsModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal('settingsModal')">&times;</span>
+                <h2>Configurações</h2>
+                <div class="settings-form">
+                    <div class="form-group">
+                        <label>Seu Nome:</label>
+                        <input type="text" id="player1NameInput" placeholder="Seu nome">
+                    </div>
+                    <div class="form-group">
+                        <label>Nome da Namorada:</label>
+                        <input type="text" id="player2NameInput" placeholder="Nome dela">
+                    </div>
+                    <button class="btn-primary" onclick="saveSettings()">Salvar</button>
+                    <button class="btn-danger" onclick="resetData()">Limpar Dados</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- New Task Modal -->
+        <div id="newTaskModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal('newTaskModal')">&times;</span>
+                <h2>Nova Tarefa</h2>
+                <div class="form-group">
+                    <label>Descrição:</label>
+                    <input type="text" id="taskDescription" placeholder="O que você quer fazer?">
+                </div>
+                <div class="form-group">
+                    <label>Moedas a Ganhar:</label>
+                    <input type="number" id="taskCoins" placeholder="10" min="1" value="10">
+                </div>
+                <div class="form-group">
+                    <label>Tipo:</label>
+                    <select id="taskType">
+                        <option value="pessoal">Pessoal</option>
+                        <option value="casal">Casal</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Responsável:</label>
+                    <select id="taskAssigned">
+                        <option value="player1">Você</option>
+                        <option value="player2">Namorada</option>
+                        <option value="ambos">Ambos</option>
+                    </select>
+                </div>
+                <button class="btn-primary" onclick="createTask()">Criar Tarefa</button>
+            </div>
+        </div>
+
+        <!-- New Challenge Modal -->
+        <div id="newChallengeModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal('newChallengeModal')">&times;</span>
+                <h2>Novo Desafio do Casal</h2>
+                <div class="form-group">
+                    <label>Descrição:</label>
+                    <input type="text" id="challengeDescription" placeholder="Qual é o desafio?">
+                </div>
+                <div class="form-group">
+                    <label>Moedas para Cada Um:</label>
+                    <input type="number" id="challengeCoins" placeholder="20" min="1" value="20">
+                </div>
+                <div class="form-group">
+                    <label>Dificuldade:</label>
+                    <select id="challengeDifficulty">
+                        <option value="facil">Fácil 😊</option>
+                        <option value="medio">Médio 😎</option>
+                        <option value="dificil">Difícil 🔥</option>
+                    </select>
+                </div>
+                <button class="btn-primary" onclick="createChallenge()">Criar Desafio</button>
+            </div>
+        </div>
+
+        <!-- Notification Toast -->
+        <div id="toast" class="toast"></div>
+
+        <!-- Room Modal -->
+        <div id="roomModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal('roomModal')">&times;</span>
+                <h2>🔗 Conectar a uma Sala</h2>
+                <p style="color: #666; margin-bottom: 20px;">Para sincronizar com sua namorada, vocês precisam estar na mesma sala.</p>
+                <div class="form-group">
+                    <label>Código da Sala:</label>
+                    <input type="text" id="roomIdInput" placeholder="metasnenem-xxxxx" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Quer conectar a outra sala?</label>
+                    <input type="text" id="newRoomInput" placeholder="Digite o código dela">
+                </div>
+                <div style="background: #f0f4ff; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 0.9em;">
+                    <strong>💡 Como funciona:</strong><br>
+                    1. Vocês trocam este código<br>
+                    2. Ela digita na sala dela<br>
+                    3. Pronto! Sincronizados em tempo real! ✨
+                </div>
+                <button class="btn-primary" onclick="copyRoomId()">📋 Copiar Meu Código</button>
+                <button class="btn-primary" onclick="joinRoom()" style="background: var(--secondary);">✅ Entrar em Outra Sala</button>
+                <button class="btn-danger" onclick="createNewRoom()">🆕 Nova Sala</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

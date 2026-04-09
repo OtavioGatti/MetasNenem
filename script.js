@@ -771,17 +771,20 @@ async function syncToCloud() {
     }
 }
 
-// Chamar syncToCloud quando o jogo inicia
+// Não chamar syncToCloud() na inicialização - evita duplicar players!
+// Os dados são sincronizados automaticamente por:
+// 1. setupFirstPlayerInRoom() que faz upsertPlayer() quando cria a sala
+// 2. startSync() que faz polling a cada 1.5s
+// 3. Cada ação (createTask, completeTask, etc) que faz sync
 function initSupabaseSync() {
-    if (USE_SUPABASE && supabase) {
-        syncToCloud();
-    }
+    console.log('✅ Supabase já está inicializado via polling');
+    // Não fazer nada aqui - evita duplicação de players
 }
 
 // Initialize on load
 window.addEventListener('DOMContentLoaded', function() {
     init();
-    setTimeout(initSupabaseSync, 500); // Aguarda inicialização
+    // Não mais chamar initSupabaseSync() - sync já está ativo via startSync()
 });
 
 // Auto-save on visibility change

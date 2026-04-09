@@ -22,29 +22,72 @@ class SupabaseManager {
     }
 
     async upsertPlayer(roomId, playerNumber, playerData) {
-        const response = await fetch(
-            `${this.url}/rest/v1/players`,
-            {
-                method: 'POST',
-                headers: {
-                    ...this.headers,
-                    'Prefer': 'return=minimal'
-                },
-                body: JSON.stringify({
-                    room_id: roomId,
-                    player_number: playerNumber,
-                    name: playerData.name,
-                    coins: playerData.coins,
-                    level: playerData.level,
-                    streak: playerData.streak,
-                    tasks_completed: playerData.tasksCompleted,
-                    achievements: playerData.achievements,
-                    last_activity_date: playerData.lastActivityDate
-                })
+        try {
+            // 1. Primeiro, tenta fazer PATCH (UPDATE) na tentativa de atualizar
+            const updateResponse = await fetch(
+                `${this.url}/rest/v1/players?room_id=eq.${roomId}&player_number=eq.${playerNumber}`,
+                {
+                    method: 'PATCH',
+                    headers: {
+                        ...this.headers,
+                        'Prefer': 'return=minimal',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name: playerData.name,
+                        coins: playerData.coins,
+                        level: playerData.level,
+                        streak: playerData.streak,
+                        tasks_completed: playerData.tasksCompleted,
+                        achievements: playerData.achievements,
+                        last_activity_date: playerData.lastActivityDate
+                    })
+                }
+            );
+
+            // Se UPDATE retornar sucesso, pronto!
+            if (updateResponse.ok) {
+                console.log(`✅ Player ${playerNumber} atualizado`);
+                return { success: true };
             }
-        );
-        if (response.ok) return { success: true };
-        throw new Error(`POST /players failed: ${response.status}`);
+
+            // 2. Se UPDATE falhar (player não existe), tenta POST (INSERT)
+            if (updateResponse.status === 206 || updateResponse.status === 200) {
+                // Pode estar vazio, tenta criar novo
+                const insertResponse = await fetch(
+                    `${this.url}/rest/v1/players`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            ...this.headers,
+                            'Prefer': 'return=minimal',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            room_id: roomId,
+                            player_number: playerNumber,
+                            name: playerData.name,
+                            coins: playerData.coins,
+                            level: playerData.level,
+                            streak: playerData.streak,
+                            tasks_completed: playerData.tasksCompleted,
+                            achievements: playerData.achievements,
+                            last_activity_date: playerData.lastActivityDate
+                        })
+                    }
+                );
+
+                if (insertResponse.ok) {
+                    console.log(`✅ Player ${playerNumber} criado`);
+                    return { success: true };
+                }
+            }
+
+            throw new Error(`Upsert failed: UPDATE ${updateResponse.status}`);
+        } catch (error) {
+            console.error(`❌ Erro em upsertPlayer(${playerNumber}):`, error);
+            throw error;
+        }
     }
 
     async updatePlayer(roomId, playerNumber, updates) {

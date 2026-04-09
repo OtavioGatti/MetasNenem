@@ -30,7 +30,7 @@ class SupabaseManager {
                     method: 'PATCH',
                     headers: {
                         ...this.headers,
-                        'Prefer': 'return=minimal',
+                        'Prefer': 'return=representation',
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
@@ -45,45 +45,42 @@ class SupabaseManager {
                 }
             );
 
-            // Se UPDATE retornar sucesso, pronto!
-            if (updateResponse.ok) {
-                console.log(`✅ Player ${playerNumber} atualizado`);
+            // Se UPDATE retornar sucesso (200 ou 204), pronto!
+            if (updateResponse.ok && updateResponse.status !== 206) {
+                console.log(`✅ Player ${playerNumber} atualizado no Supabase`);
                 return { success: true };
             }
 
-            // 2. Se UPDATE falhar (player não existe), tenta POST (INSERT)
-            if (updateResponse.status === 206 || updateResponse.status === 200) {
-                // Pode estar vazio, tenta criar novo
-                const insertResponse = await fetch(
-                    `${this.url}/rest/v1/players`,
-                    {
-                        method: 'POST',
-                        headers: {
-                            ...this.headers,
-                            'Prefer': 'return=minimal',
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            room_id: roomId,
-                            player_number: playerNumber,
-                            name: playerData.name,
-                            coins: playerData.coins,
-                            level: playerData.level,
-                            streak: playerData.streak,
-                            tasks_completed: playerData.tasksCompleted,
-                            achievements: playerData.achievements,
-                            last_activity_date: playerData.lastActivityDate
-                        })
-                    }
-                );
-
-                if (insertResponse.ok) {
-                    console.log(`✅ Player ${playerNumber} criado`);
-                    return { success: true };
+            // 2. Se UPDATE retornar vazio (206) ou não encontrou, tenta POST (INSERT)
+            const insertResponse = await fetch(
+                `${this.url}/rest/v1/players`,
+                {
+                    method: 'POST',
+                    headers: {
+                        ...this.headers,
+                        'Prefer': 'return=representation',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        room_id: roomId,
+                        player_number: playerNumber,
+                        name: playerData.name,
+                        coins: playerData.coins,
+                        level: playerData.level,
+                        streak: playerData.streak,
+                        tasks_completed: playerData.tasksCompleted,
+                        achievements: playerData.achievements,
+                        last_activity_date: playerData.lastActivityDate
+                    })
                 }
+            );
+
+            if (insertResponse.ok) {
+                console.log(`✅ Player ${playerNumber} criado no Supabase`);
+                return { success: true };
             }
 
-            throw new Error(`Upsert failed: UPDATE ${updateResponse.status}`);
+            throw new Error(`POST failed: ${insertResponse.status}`);
         } catch (error) {
             console.error(`❌ Erro em upsertPlayer(${playerNumber}):`, error);
             throw error;

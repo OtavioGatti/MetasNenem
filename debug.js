@@ -54,6 +54,7 @@ window.forceUploadPlayer = async function() {
                     'Content-Type': 'application/json',
                     'apikey': SUPABASE_KEY,
                     'Authorization': `Bearer ${SUPABASE_KEY}`,
+                    'Prefer': 'return=representation'
                 },
                 body: JSON.stringify({
                     room_id: 'metasnenem-test123',
@@ -66,12 +67,17 @@ window.forceUploadPlayer = async function() {
         );
         
         console.log('Status:', response.status);
-        const data = await response.json();
-        console.log('Response:', data);
         
-        if (response.ok || response.status === 201) {
-            console.log('✅ Player enviado!');
+        if (response.status === 201 || response.status === 200) {
+            console.log('✅ Player enviado com sucesso!');
+            try {
+                const data = await response.json();
+                console.log('Dados:', data);
+            } catch (e) {
+                console.log('Response sem JSON (normal para POST)');
+            }
         } else {
+            const data = await response.json();
             console.log('❌ Erro:', data);
         }
     } catch (error) {

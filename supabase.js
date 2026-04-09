@@ -114,10 +114,18 @@ class SupabaseManager {
     }
 
     async deleteTask(taskId) {
-        return fetch(
+        const response = await fetch(
             `${this.url}/rest/v1/tasks?id=eq.${taskId}`,
-            { method: 'DELETE', headers: this.headers }
+            {
+                method: 'DELETE',
+                headers: {
+                    ...this.headers,
+                    'Prefer': 'return=minimal'
+                }
+            }
         );
+        if (response.ok) return { success: true };
+        throw new Error(`DELETE /tasks failed: ${response.status}`);
     }
 
     // ============ CHALLENGES ============

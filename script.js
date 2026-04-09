@@ -232,6 +232,14 @@ function completeTask(taskId, playerId, playerName) {
 function deleteTask(taskId) {
     gameState.tasks = gameState.tasks.filter(t => t.id !== taskId);
     saveGame();
+    
+    // Sincronizar com Supabase
+    if (USE_SUPABASE && supabase) {
+        supabase.deleteTask(taskId)
+            .then(() => console.log('✅ Tarefa apagada do Supabase'))
+            .catch(err => console.error('❌ ERRO ao deletar tarefa:', err));
+    }
+    
     renderTasks();
     showToast('🗑️ Tarefa removida');
 }
@@ -480,14 +488,22 @@ function renderAchievements() {
 
 // History
 function addHistory(action) {
-    gameState.history.unshift({
+    const historyEntry = {
         action,
         timestamp: new Date().toISOString(),
         id: Date.now()
-    });
+    };
+    gameState.history.unshift(historyEntry);
     
     if (gameState.history.length > 50) {
         gameState.history.pop();
+    }
+    
+    // Sincronizar com Supabase
+    if (USE_SUPABASE && supabase) {
+        supabase.addHistory(getRoomId(), action)
+            .then(() => console.log('✅ Histórico sincronizado'))
+            .catch(err => console.error('❌ ERRO ao sincronizar histórico:', err));
     }
 }
 
@@ -734,33 +750,45 @@ async function syncToCloud() {
     try {
         const roomId = getRoomId();
         
-        // Sincronizar players
-        await supabase.updatePlayer(roomId, 1, {
+        // Criar/Upsert players (cria se não existir)
+        await supabase.upsertPlayer(roomId, 1, {
             name: gameState.player1.name,
             coins: gameState.player1.coins,
             level: gameState.player1.level,
             streak: gameState.player1.streak,
-            tasks_completed: gameState.player1.tasksCompleted,
+            tasksCompleted: gameState.player1.tasksCompleted,
             achievements: gameState.player1.achievements,
-            last_activity_date: gameState.player1.lastActivityDate
+            lastActivityDate: gameState.player1.lastActivityDate
         });
         
-        await supabase.updatePlayer(roomId, 2, {
+        await supabase.upsertPlayer(roomId, 2, {
             name: gameState.player2.name,
             coins: gameState.player2.coins,
             level: gameState.player2.level,
             streak: gameState.player2.streak,
-            tasks_completed: gameState.player2.tasksCompleted,
+            tasksCompleted: gameState.player2.tasksCompleted,
             achievements: gameState.player2.achievements,
-            last_activity_date: gameState.player2.lastActivityDate
+            lastActivityDate: gameState.player2.lastActivityDate
         });
+        
+        console.log('✅ Players sincronizados com Supabase');
     } catch (error) {
-        console.log('Erro ao sincronizar com cloud:', error);
+        console.error('❌ Erro ao sincronizar com cloud:', error);
+    }
+}
+
+// Chamar syncToCloud quando o jogo inicia
+function initSupabaseSync() {
+    if (USE_SUPABASE && supabase) {
+        syncToCloud();
     }
 }
 
 // Initialize on load
-window.addEventListener('DOMContentLoaded', init);
+window.addEventListener('DOMContentLoaded', function() {
+    init();
+    setTimeout(initSupabaseSync, 500); // Aguarda inicialização
+});
 
 // Auto-save on visibility change
 document.addEventListener('visibilitychange', () => {

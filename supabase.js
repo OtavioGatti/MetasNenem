@@ -26,7 +26,10 @@ class SupabaseManager {
             `${this.url}/rest/v1/players`,
             {
                 method: 'POST',
-                headers: this.headers,
+                headers: {
+                    ...this.headers,
+                    'Prefer': 'return=minimal'
+                },
                 body: JSON.stringify({
                     room_id: roomId,
                     player_number: playerNumber,
@@ -40,7 +43,8 @@ class SupabaseManager {
                 })
             }
         );
-        return response.json();
+        if (response.ok) return { success: true };
+        throw new Error(`POST /players failed: ${response.status}`);
     }
 
     async updatePlayer(roomId, playerNumber, updates) {
@@ -48,11 +52,15 @@ class SupabaseManager {
             `${this.url}/rest/v1/players?room_id=eq.${roomId}&player_number=eq.${playerNumber}`,
             {
                 method: 'PATCH',
-                headers: this.headers,
+                headers: {
+                    ...this.headers,
+                    'Prefer': 'return=minimal'
+                },
                 body: JSON.stringify(updates)
             }
         );
-        return response.json();
+        if (response.ok) return { success: true };
+        throw new Error(`PATCH /players failed: ${response.status}`);
     }
 
     // ============ TASKS ============
@@ -69,7 +77,10 @@ class SupabaseManager {
             `${this.url}/rest/v1/tasks`,
             {
                 method: 'POST',
-                headers: this.headers,
+                headers: {
+                    ...this.headers,
+                    'Prefer': 'return=minimal'
+                },
                 body: JSON.stringify({
                     room_id: roomId,
                     description: taskData.description,
@@ -80,7 +91,9 @@ class SupabaseManager {
                 })
             }
         );
-        return response.json();
+        // POST com 'return=minimal' retorna 201 sem corpo
+        if (response.ok) return { success: true };
+        throw new Error(`POST /tasks failed: ${response.status}`);
     }
 
     async updateTask(taskId, updates) {
@@ -88,11 +101,16 @@ class SupabaseManager {
             `${this.url}/rest/v1/tasks?id=eq.${taskId}`,
             {
                 method: 'PATCH',
-                headers: this.headers,
+                headers: {
+                    ...this.headers,
+                    'Prefer': 'return=minimal'
+                },
                 body: JSON.stringify(updates)
             }
         );
-        return response.json();
+        // PATCH com 'return=minimal' retorna 200/204 sem corpo
+        if (response.ok) return { success: true };
+        throw new Error(`PATCH /tasks failed: ${response.status}`);
     }
 
     async deleteTask(taskId) {
@@ -116,7 +134,10 @@ class SupabaseManager {
             `${this.url}/rest/v1/challenges`,
             {
                 method: 'POST',
-                headers: this.headers,
+                headers: {
+                    ...this.headers,
+                    'Prefer': 'return=minimal'
+                },
                 body: JSON.stringify({
                     room_id: roomId,
                     description: challengeData.description,
@@ -126,7 +147,8 @@ class SupabaseManager {
                 })
             }
         );
-        return response.json();
+        if (response.ok) return { success: true };
+        throw new Error(`POST /challenges failed: ${response.status}`);
     }
 
     async updateChallenge(challengeId, updates) {
@@ -134,26 +156,35 @@ class SupabaseManager {
             `${this.url}/rest/v1/challenges?id=eq.${challengeId}`,
             {
                 method: 'PATCH',
-                headers: this.headers,
+                headers: {
+                    ...this.headers,
+                    'Prefer': 'return=minimal'
+                },
                 body: JSON.stringify(updates)
             }
         );
-        return response.json();
+        if (response.ok) return { success: true };
+        throw new Error(`PATCH /challenges failed: ${response.status}`);
     }
 
     // ============ HISTORY ============
     async addHistory(roomId, action) {
-        return fetch(
+        const response = await fetch(
             `${this.url}/rest/v1/history`,
             {
                 method: 'POST',
-                headers: this.headers,
+                headers: {
+                    ...this.headers,
+                    'Prefer': 'return=minimal'
+                },
                 body: JSON.stringify({
                     room_id: roomId,
                     action: action
                 })
             }
         );
+        if (response.ok) return { success: true };
+        throw new Error(`POST /history failed: ${response.status}`);
     }
 
     async getHistory(roomId) {

@@ -37,10 +37,14 @@ const ACHIEVEMENTS_DB = {
 };
 
 // Initialize
-function init() {
+async function init() {
     initSupabase();
     validateConfig();
     loadGame();
+    
+    // Autenticar jogador antes de renderizar
+    await initializeAuth();
+    
     setupRoomUI();
     renderAll();
     checkDailyStreak();
@@ -109,23 +113,17 @@ function filterTasks(filter) {
 }
 
 function toggleSettings() {
+    const currentPlayer = getCurrentPlayer();
+    if (currentPlayer) {
+        const displayText = `${currentPlayer.name} (${currentPlayer.id === 1 ? 'Player 1' : 'Player 2'})`;
+        document.getElementById('currentPlayerDisplay').textContent = displayText;
+    }
     document.getElementById('settingsModal').classList.add('show');
-    document.getElementById('player1NameInput').value = gameState.player1.name;
-    document.getElementById('player2NameInput').value = gameState.player2.name;
 }
 
 function saveSettings() {
-    const name1 = document.getElementById('player1NameInput').value.trim();
-    const name2 = document.getElementById('player2NameInput').value.trim();
-    
-    if (name1) gameState.player1.name = name1;
-    if (name2) gameState.player2.name = name2;
-    
-    saveGame();
-    updatePlayerInitials();
-    renderPlayers();
-    closeModal('settingsModal');
-    showToast('✅ Nomes atualizados!');
+    // Não mais usado - autenticação agora é feita via initializeAuth()
+    location.reload();
 }
 
 function openNewTaskModal() {

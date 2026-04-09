@@ -54,12 +54,12 @@ window.forceUploadPlayer = async function() {
                     'Content-Type': 'application/json',
                     'apikey': SUPABASE_KEY,
                     'Authorization': `Bearer ${SUPABASE_KEY}`,
-                    'Prefer': 'return=representation'
+                    'Prefer': 'return=minimal'  // Não retorna dados
                 },
                 body: JSON.stringify({
                     room_id: 'metasnenem-test123',
                     player_number: 1,
-                    name: 'Teste',
+                    name: 'Teste Supabase',
                     coins: 100,
                     level: 1
                 })
@@ -68,20 +68,22 @@ window.forceUploadPlayer = async function() {
         
         console.log('Status:', response.status);
         
-        if (response.status === 201 || response.status === 200) {
-            console.log('✅ Player enviado com sucesso!');
+        if (response.status === 201) {
+            console.log('✅ Player criado com sucesso no Supabase!');
+            console.log('Agora verifique em Table Editor → players');
+        } else if (response.status === 200) {
+            console.log('✅ Player enviado!');
+        } else {
+            console.log('❌ Status inesperado:', response.status);
             try {
                 const data = await response.json();
-                console.log('Dados:', data);
+                console.log('Erro:', data);
             } catch (e) {
-                console.log('Response sem JSON (normal para POST)');
+                console.log('Não conseguiu parsear resposta');
             }
-        } else {
-            const data = await response.json();
-            console.log('❌ Erro:', data);
         }
     } catch (error) {
-        console.error('❌ Erro ao enviar:', error);
+        console.error('❌ Erro:', error.message);
     }
 }
 

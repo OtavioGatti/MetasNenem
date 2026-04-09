@@ -95,9 +95,63 @@ window.checkStatus = function() {
     console.log('Room ID:', getRoomId());
 }
 
+// Verificar dados no Supabase
+window.checkSupabaseData = async function() {
+    console.log('\n🔎 Verificando dados no Supabase...');
+    const roomId = getRoomId();
+    console.log('Room ID:', roomId);
+    
+    try {
+        // Check players
+        const playersResp = await fetch(
+            `${SUPABASE_URL}/rest/v1/players?room_id=eq.${roomId}`,
+            {
+                headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Authorization': `Bearer ${SUPABASE_KEY}`
+                }
+            }
+        );
+        const players = await playersResp.json();
+        console.log('📌 Players encontrados:', players.length);
+        console.log('Dados:', players);
+        
+        // Check tasks
+        const tasksResp = await fetch(
+            `${SUPABASE_URL}/rest/v1/tasks?room_id=eq.${roomId}`,
+            {
+                headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Authorization': `Bearer ${SUPABASE_KEY}`
+                }
+            }
+        );
+        const tasks = await tasksResp.json();
+        console.log('✅ Tasks encontradas:', tasks.length);
+        console.log('Dados:', tasks);
+        
+        // Check challenges
+        const challengesResp = await fetch(
+            `${SUPABASE_URL}/rest/v1/challenges?room_id=eq.${roomId}`,
+            {
+                headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Authorization': `Bearer ${SUPABASE_KEY}`
+                }
+            }
+        );
+        const challenges = await challengesResp.json();
+        console.log('💑 Challenges encontradas:', challenges.length);
+        console.log('Dados:', challenges);
+    } catch (error) {
+        console.error('❌ Erro ao verificar:', error);
+    }
+}
+
 // Executar testes
 console.log('\n▶️ Execute no console:');
 console.log('testSupabaseConnection() - Test connection');
+console.log('checkSupabaseData() - Ver dados no Supabase');
 console.log('forceUploadPlayer() - Enviar um player');
 console.log('checkStatus() - Ver status');
 console.log('syncToCloud() - Forçar sincronização');

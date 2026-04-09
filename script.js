@@ -181,7 +181,9 @@ function createTask() {
     // Sincronizar com Supabase
     if (USE_SUPABASE && supabase) {
         supabase.createTask(getRoomId(), task).then(() => {
-            console.log('✅ Tarefa sincronizada com Supabase');
+            console.log('✅ Tarefa sincronizada com Supabase', task);
+        }).catch(err => {
+            console.error('❌ ERRO ao criar tarefa no Supabase:', err);
         });
     }
     
@@ -297,9 +299,9 @@ function createChallenge() {
     
     // Sincronizar com Supabase
     if (USE_SUPABASE && supabase) {
-        supabase.createChallenge(getRoomId(), challenge).then(() => {
-            console.log('✅ Desafio sincronizado com Supabase');
-        });
+        supabase.createChallenge(getRoomId(), challenge)
+            .then(() => console.log('✅ Desafio sincronizado com Supabase', challenge))
+            .catch(err => console.error('❌ ERRO ao criar desafio no Supabase:', err));
     }
     
     renderChallenges();
@@ -333,20 +335,26 @@ function completeChallenge(challengeId) {
     // Sincronizar com Supabase
     if (USE_SUPABASE && supabase) {
         const roomId = getRoomId();
-        supabase.updateChallenge(challenge.id, { completed: true }).catch(e => console.error('Erro ao atualizar challenge:', e));
+        supabase.updateChallenge(challenge.id, { completed: true })
+            .then(() => console.log('✅ Challenge atualizado no Supabase'))
+            .catch(e => console.error('❌ ERRO ao atualizar challenge:', e, {id: challenge.id}));
         
         // Sincronizar ambos os players
         supabase.updatePlayer(roomId, 1, {
             coins: gameState.player1.coins,
             level: gameState.player1.level,
             streak: gameState.player1.streak
-        }).catch(e => console.error('Erro ao atualizar player1:', e));
+        })
+            .then(() => console.log('✅ Player1 atualizado no Supabase'))
+            .catch(e => console.error('❌ ERRO ao atualizar player1:', e, {roomId}));
         
         supabase.updatePlayer(roomId, 2, {
             coins: gameState.player2.coins,
             level: gameState.player2.level,
             streak: gameState.player2.streak
-        }).catch(e => console.error('Erro ao atualizar player2:', e));
+        })
+            .then(() => console.log('✅ Player2 atualizado no Supabase'))
+            .catch(e => console.error('❌ ERRO ao atualizar player2:', e, {roomId}));
     }
     
     renderAll();

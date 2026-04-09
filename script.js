@@ -177,6 +177,14 @@ function createTask() {
     
     gameState.tasks.push(task);
     saveGame();
+    
+    // Sincronizar com Supabase
+    if (USE_SUPABASE && supabase) {
+        supabase.createTask(getRoomId(), task).then(() => {
+            console.log('✅ Tarefa sincronizada com Supabase');
+        });
+    }
+    
     renderTasks();
     closeModal('newTaskModal');
     document.getElementById('taskDescription').value = '';
@@ -202,6 +210,19 @@ function completeTask(taskId, playerId, playerName) {
     
     addHistory(`${playerName} completou "${task.description}" +${task.coins}⭐`);
     saveGame();
+    
+    // Sincronizar com Supabase
+    if (USE_SUPABASE && supabase) {
+        const roomId = getRoomId();
+        supabase.updateTask(task.id, { completed: true, completed_by: playerId }).catch(e => console.error('Erro ao atualizar task:', e));
+        supabase.updatePlayer(roomId, playerId === 'player1' ? 1 : 2, {
+            coins: player.coins,
+            level: player.level,
+            streak: player.streak,
+            tasks_completed: player.tasksCompleted
+        }).catch(e => console.error('Erro ao atualizar player:', e));
+    }
+    
     renderAll();
     showToast(`🎉 ${playerName} ganhou ${task.coins} moedas!`);
 }
@@ -273,6 +294,14 @@ function createChallenge() {
     
     gameState.challenges.push(challenge);
     saveGame();
+    
+    // Sincronizar com Supabase
+    if (USE_SUPABASE && supabase) {
+        supabase.createChallenge(getRoomId(), challenge).then(() => {
+            console.log('✅ Desafio sincronizado com Supabase');
+        });
+    }
+    
     renderChallenges();
     closeModal('newChallengeModal');
     document.getElementById('challengeDescription').value = '';
@@ -300,6 +329,26 @@ function completeChallenge(challengeId) {
     addHistory(`💑 ${gameState.player1.name} e ${gameState.player2.name} completaram desafio: "${challenge.description}" +${challenge.coins}⭐ cada`);
     
     saveGame();
+    
+    // Sincronizar com Supabase
+    if (USE_SUPABASE && supabase) {
+        const roomId = getRoomId();
+        supabase.updateChallenge(challenge.id, { completed: true }).catch(e => console.error('Erro ao atualizar challenge:', e));
+        
+        // Sincronizar ambos os players
+        supabase.updatePlayer(roomId, 1, {
+            coins: gameState.player1.coins,
+            level: gameState.player1.level,
+            streak: gameState.player1.streak
+        }).catch(e => console.error('Erro ao atualizar player1:', e));
+        
+        supabase.updatePlayer(roomId, 2, {
+            coins: gameState.player2.coins,
+            level: gameState.player2.level,
+            streak: gameState.player2.streak
+        }).catch(e => console.error('Erro ao atualizar player2:', e));
+    }
+    
     renderAll();
     showToast('🎉 Desafio do casal completado! +' + challenge.coins + '⭐ para cada um!');
 }

@@ -123,7 +123,7 @@ class SupabaseManager {
                     method: 'POST',
                     headers: {
                         ...this.headers,
-                        'Prefer': 'return=minimal'
+                        'Prefer': 'return=representation'
                     },
                     body: JSON.stringify({
                         room_id: roomId,
@@ -140,11 +140,18 @@ class SupabaseManager {
                 throw new Error(`POST /tasks failed: ${response.status}`);
             }
             
-            console.log('✅ Tarefa criada no Supabase');
-            return { success: true };
+            const text = await response.text();
+            if (!text) {
+                console.log('✅ Tarefa criada (resposta vazia)');
+                return { id: null };
+            }
+            
+            const created = JSON.parse(text);
+            console.log('✅ Tarefa criada no Supabase:', created.id);
+            return Array.isArray(created) ? created[0] : created;
         } catch (err) {
-            console.error('Erro em createTask:', err);
-            throw err;
+            console.error('❌ Erro em createTask:', err);
+            return null;
         }
     }
 
@@ -197,7 +204,7 @@ class SupabaseManager {
                     method: 'POST',
                     headers: {
                         ...this.headers,
-                        'Prefer': 'return=minimal'
+                        'Prefer': 'return=representation'
                     },
                     body: JSON.stringify({
                         room_id: roomId,
@@ -213,11 +220,18 @@ class SupabaseManager {
                 throw new Error(`POST /challenges failed: ${response.status}`);
             }
             
-            console.log('✅ Desafio criado no Supabase');
-            return { success: true };
+            const text = await response.text();
+            if (!text) {
+                console.log('✅ Desafio criado (resposta vazia)');
+                return { id: null };
+            }
+            
+            const created = JSON.parse(text);
+            console.log('✅ Desafio criado no Supabase:', created.id);
+            return Array.isArray(created) ? created[0] : created;
         } catch (err) {
-            console.error('Erro em createChallenge:', err);
-            throw err;
+            console.error('❌ Erro em createChallenge:', err);
+            return null;
         }
     }
 

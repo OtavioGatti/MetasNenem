@@ -163,7 +163,8 @@ function createTask() {
     }
     
     const task = {
-        id: Date.now(),
+        id: Date.now(), // ID local para referência rápida
+        supabaseId: null, // ID real do Supabase (será preenchido após criar)
         description,
         coins,
         type,
@@ -176,10 +177,19 @@ function createTask() {
     gameState.tasks.push(task);
     saveGame();
     
-    // Sincronizar com Supabase (não espera resposta)
+    // Sincronizar com Supabase e atualizar supabaseId
     if (USE_SUPABASE && supabase) {
-        supabase.createTask(getRoomId(), task)
-            .catch(err => console.error('\u274c ERRO ao criar tarefa no Supabase:', err));
+        const roomId = getRoomId();
+        supabase.createTask(roomId, task)
+            .then(created => {
+                if (created && created.id) {
+                    // Atualizar com o UUID real do Supabase
+                    task.supabaseId = created.id;
+                    saveGame();
+                    console.log('✅ Task local atualizada com UUID do Supabase:', created.id);
+                }
+            })
+            .catch(err => console.error('❌ ERRO ao criar tarefa no Supabase:', err));
     }
     
     renderTasks();
@@ -211,13 +221,22 @@ function completeTask(taskId, playerId, playerName) {
     // Sincronizar com Supabase
     if (USE_SUPABASE && supabase) {
         const roomId = getRoomId();
-        supabase.updateTask(task.id, { completed: true, completed_by: playerId }).catch(e => console.error('Erro ao atualizar task:', e));
+        
+        // Usar supabaseId se disponível, senão usar id local (para tarefas antigas)
+        const taskIdToUpdate = task.supabaseId || task.id;
+        
+        supabase.updateTask(taskIdToUpdate, { completed: true, completed_by: playerId })
+            .then(() => console.log('✅ Task atualizada no Supabase'))
+            .catch(e => console.error('❌ ERRO ao atualizar task:', e, {taskId: taskIdToUpdate, supabaseId: task.supabaseId}));
+        
+        // Sincronizar player que completa
         supabase.updatePlayer(roomId, playerId === 'player1' ? 1 : 2, {
             coins: player.coins,
             level: player.level,
             streak: player.streak,
             tasks_completed: player.tasksCompleted
-        }).catch(e => console.error('Erro ao atualizar player:', e));
+        }).then(() => console.log('✅ Player atualizado no Supabase'))
+          .catch(e => console.error('❌ ERRO ao atualizar player:', e));
     }
     
     renderAll();
@@ -225,14 +244,17 @@ function completeTask(taskId, playerId, playerName) {
 }
 
 function deleteTask(taskId) {
+    const task = gameState.tasks.find(t => t.id === taskId);
     gameState.tasks = gameState.tasks.filter(t => t.id !== taskId);
     saveGame();
     
     // Sincronizar com Supabase
-    if (USE_SUPABASE && supabase) {
-        supabase.deleteTask(taskId)
+    if (USE_SUPABASE && supabase && task) {
+        // Usar supabaseId se disponível
+        const taskIdToDelete = task.supabaseId || task.id;
+        supabase.deleteTask(taskIdToDelete)
             .then(() => console.log('✅ Tarefa apagada do Supabase'))
-            .catch(err => console.error('❌ ERRO ao deletar tarefa:', err));
+            .catch(err => console.error('❌ ERRO ao deletar tarefa:', err, {taskId: taskIdToDelete, supabaseId: task.supabaseId}));
     }
     
     renderTasks();
@@ -289,7 +311,8 @@ function createChallenge() {
     }
     
     const challenge = {
-        id: Date.now(),
+        id: Date.now(), // ID local
+        supabaseId: null, // ID real do Supabase
         description,
         coins,
         difficulty,
@@ -300,10 +323,19 @@ function createChallenge() {
     gameState.challenges.push(challenge);
     saveGame();
     
-    // Sincronizar com Supabase (não espera resposta)
+    // Sincronizar com Supabase e atualizar supabaseId
     if (USE_SUPABASE && supabase) {
-        supabase.createChallenge(getRoomId(), challenge)
-            .catch(err => console.error('\u274c ERRO ao criar desafio no Supabase:', err));
+        const roomId = getRoomId();
+        supabase.createChallenge(roomId, challenge)
+            .then(created => {
+                if (created && created.id) {
+                    // Atualizar com o UUID real do Supabase
+                    challenge.supabaseId = created.id;
+                    saveGame();
+                    console.log('✅ Challenge local atualizado com UUID do Supabase:', created.id);
+                }
+            })
+            .catch(err => console.error('❌ ERRO ao criar desafio no Supabase:', err));
     }
     
     renderChallenges();
@@ -337,9 +369,13 @@ function completeChallenge(challengeId) {
     // Sincronizar com Supabase
     if (USE_SUPABASE && supabase) {
         const roomId = getRoomId();
-        supabase.updateChallenge(challenge.id, { completed: true })
+        
+        // Usar supabaseId se disponível
+        const challengeIdToUpdate = challenge.supabaseId || challenge.id;
+        
+        supabase.updateChallenge(challengeIdToUpdate, { completed: true })
             .then(() => console.log('✅ Challenge atualizado no Supabase'))
-            .catch(e => console.error('❌ ERRO ao atualizar challenge:', e, {id: challenge.id}));
+            .catch(e => console.error('❌ ERRO ao atualizar challenge:', e, {id: challengeIdToUpdate, supabaseId: challenge.supabaseId}));
         
         // Sincronizar ambos os players
         supabase.updatePlayer(roomId, 1, {

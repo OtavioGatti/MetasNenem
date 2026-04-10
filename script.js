@@ -311,28 +311,38 @@ function renderTasks() {
 }
 
 // Adicionar event listeners aos botões das tarefas
+let taskListenerAttached = false;
+
 function addTaskEventListeners() {
-    // Botões de completar tarefa
-    document.querySelectorAll('button.btn-check[data-task-id][data-player-id]').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const taskId = parseInt(this.getAttribute('data-task-id'));
-            const playerId = parseInt(this.getAttribute('data-player-id'));
+    // Usar event delegation para evitar duplicar listeners
+    if (taskListenerAttached) return;
+    
+    const tasksList = document.getElementById('tasks-list');
+    if (!tasksList) return;
+    
+    tasksList.addEventListener('click', function(e) {
+        const checkBtn = e.target.closest('button.btn-check[data-task-id][data-player-id]');
+        if (checkBtn) {
+            const taskId = parseInt(checkBtn.getAttribute('data-task-id'));
+            const playerId = parseInt(checkBtn.getAttribute('data-player-id'));
             const playerKey = `player${playerId}`;
             const playerName = gameState[playerKey].name;
             
-            console.log('🖱️ Button clicked:', { taskId, playerId, playerKey, playerName });
+            console.log('🖱️ Task completed:', { taskId, playerId, playerKey, playerName });
             completeTask(taskId, playerKey, playerName);
-        });
+            return;
+        }
+        
+        const deleteBtn = e.target.closest('button.btn-delete[data-task-id]');
+        if (deleteBtn) {
+            const taskId = parseInt(deleteBtn.getAttribute('data-task-id'));
+            console.log('🗑️ Task deleted:', taskId);
+            deleteTask(taskId);
+            return;
+        }
     });
     
-    // Botões de deletar tarefa
-    document.querySelectorAll('button.btn-delete[data-task-id]').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const taskId = parseInt(this.getAttribute('data-task-id'));
-            console.log('🗑️ Delete clicked:', taskId);
-            deleteTask(taskId);
-        });
-    });
+    taskListenerAttached = true;
 }
 
 // Challenges
@@ -435,6 +445,8 @@ function completeChallenge(challengeId) {
     showToast('🎉 Desafio do casal completado! +' + challenge.coins + '⭐ para cada um!');
 }
 
+let challengeListenerAttached = false;
+
 function renderChallenges() {
     const challenges = gameState.challenges.filter(c => !c.completed);
     const html = document.getElementById('couple-challenges');
@@ -461,15 +473,23 @@ function renderChallenges() {
     addChallengeEventListeners();
 }
 
-// Adicionar event listeners aos botões dos desafios
+// Usar event delegation para evitar duplicar listeners
 function addChallengeEventListeners() {
-    document.querySelectorAll('button.btn-complete-challenge[data-challenge-id]').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const challengeId = parseInt(this.getAttribute('data-challenge-id'));
-            console.log('🎯 Challenge button clicked:', challengeId);
+    if (challengeListenerAttached) return;
+    
+    const html = document.getElementById('couple-challenges');
+    if (!html) return;
+    
+    html.addEventListener('click', function(e) {
+        const btn = e.target.closest('button.btn-complete-challenge[data-challenge-id]');
+        if (btn) {
+            const challengeId = parseInt(btn.getAttribute('data-challenge-id'));
+            console.log('🎯 Challenge completed:', challengeId);
             completeChallenge(challengeId);
-        });
+        }
     });
+    
+    challengeListenerAttached = true;
 }
 
 function getDifficultyEmoji(difficulty) {
@@ -603,16 +623,26 @@ function renderLoja() {
     addShopEventListeners();
 }
 
+let shopListenerAttached = false;
+
 function addShopEventListeners() {
-    document.querySelectorAll('button.btn-purchase[data-item-id][data-item-cost]').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const itemId = parseInt(this.getAttribute('data-item-id'));
-            const itemCost = parseInt(this.getAttribute('data-item-cost'));
+    if (shopListenerAttached) return;
+    
+    const lojaItemsContainer = document.getElementById('loja-items');
+    if (!lojaItemsContainer) return;
+    
+    lojaItemsContainer.addEventListener('click', function(e) {
+        const btn = e.target.closest('button.btn-purchase[data-item-id][data-item-cost]');
+        if (btn) {
+            const itemId = parseInt(btn.getAttribute('data-item-id'));
+            const itemCost = parseInt(btn.getAttribute('data-item-cost'));
             
-            console.log('🛍️ Buy button clicked:', { itemId, itemCost });
+            console.log('🛍️ Item purchased:', { itemId, itemCost });
             purchaseItem(itemId, itemCost);
-        });
+        }
     });
+    
+    shopListenerAttached = true;
 }
 
 function purchaseItem(itemId, itemCost) {

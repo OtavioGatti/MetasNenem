@@ -312,6 +312,7 @@ function renderTasks() {
 
 // Adicionar event listeners aos botões das tarefas
 let taskListenerAttached = false;
+let processingTaskIds = new Set(); // Evitar execução duplicada
 
 function addTaskEventListeners() {
     // Usar event delegation para evitar duplicar listeners
@@ -325,11 +326,24 @@ function addTaskEventListeners() {
         if (checkBtn) {
             const taskId = parseInt(checkBtn.getAttribute('data-task-id'));
             const playerId = parseInt(checkBtn.getAttribute('data-player-id'));
+            
+            // Evitar múltiplos cliques na mesma task
+            if (processingTaskIds.has(taskId)) {
+                console.log('⚠️ Task já está sendo processada:', taskId);
+                return;
+            }
+            
+            processingTaskIds.add(taskId);
+            checkBtn.disabled = true;
+            
             const playerKey = `player${playerId}`;
             const playerName = gameState[playerKey].name;
             
             console.log('🖱️ Task completed:', { taskId, playerId, playerKey, playerName });
             completeTask(taskId, playerKey, playerName);
+            
+            // Remover do processing após um tempo seguro
+            setTimeout(() => processingTaskIds.delete(taskId), 500);
             return;
         }
         
@@ -446,6 +460,7 @@ function completeChallenge(challengeId) {
 }
 
 let challengeListenerAttached = false;
+let processingChallengeIds = new Set();
 
 function renderChallenges() {
     const challenges = gameState.challenges.filter(c => !c.completed);
@@ -484,8 +499,20 @@ function addChallengeEventListeners() {
         const btn = e.target.closest('button.btn-complete-challenge[data-challenge-id]');
         if (btn) {
             const challengeId = parseInt(btn.getAttribute('data-challenge-id'));
+            
+            // Evitar múltiplos cliques
+            if (processingChallengeIds.has(challengeId)) {
+                console.log('⚠️ Challenge já está sendo processado:', challengeId);
+                return;
+            }
+            
+            processingChallengeIds.add(challengeId);
+            btn.disabled = true;
+            
             console.log('🎯 Challenge completed:', challengeId);
             completeChallenge(challengeId);
+            
+            setTimeout(() => processingChallengeIds.delete(challengeId), 500);
         }
     });
     
@@ -624,6 +651,7 @@ function renderLoja() {
 }
 
 let shopListenerAttached = false;
+let processingItemIds = new Set();
 
 function addShopEventListeners() {
     if (shopListenerAttached) return;
@@ -637,8 +665,19 @@ function addShopEventListeners() {
             const itemId = parseInt(btn.getAttribute('data-item-id'));
             const itemCost = parseInt(btn.getAttribute('data-item-cost'));
             
+            // Evitar múltiplos cliques
+            if (processingItemIds.has(itemId)) {
+                console.log('⚠️ Item já está sendo processado:', itemId);
+                return;
+            }
+            
+            processingItemIds.add(itemId);
+            btn.disabled = true;
+            
             console.log('🛍️ Item purchased:', { itemId, itemCost });
             purchaseItem(itemId, itemCost);
+            
+            setTimeout(() => processingItemIds.delete(itemId), 500);
         }
     });
     
@@ -842,6 +881,12 @@ function joinRoom() {
     
     // 2. Limpar dados da sala anterior
     localStorage.removeItem('metasNenemGame');
+    processingTaskIds.clear();
+    processingChallengeIds.clear();
+    processingItemIds.clear();
+    taskListenerAttached = false;
+    challengeListenerAttached = false;
+    shopListenerAttached = false;
     gameState = {
         player1: { name: 'Você', coins: 0, level: 1, streak: 0, lastActivityDate: null, tasksCompleted: 0, achievements: [] },
         player2: { name: 'Namorada', coins: 0, level: 1, streak: 0, lastActivityDate: null, tasksCompleted: 0, achievements: [] },
@@ -885,6 +930,12 @@ function createNewRoom() {
     
     // 2. Limpar dados da sala anterior
     localStorage.removeItem('metasNenemGame');
+    processingTaskIds.clear();
+    processingChallengeIds.clear();
+    processingItemIds.clear();
+    taskListenerAttached = false;
+    challengeListenerAttached = false;
+    shopListenerAttached = false;
     gameState = {
         player1: { name: 'Você', coins: 0, level: 1, streak: 0, lastActivityDate: null, tasksCompleted: 0, achievements: [] },
         player2: { name: 'Namorada', coins: 0, level: 1, streak: 0, lastActivityDate: null, tasksCompleted: 0, achievements: [] },

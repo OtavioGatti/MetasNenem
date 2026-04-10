@@ -293,18 +293,46 @@ function renderTasks() {
                     ${task.completed ? `
                         <span style="color: green; font-weight: bold;">✓ Feito</span>
                     ` : `
-                        <button class="btn-small btn-check" onclick="completeTask(${task.id}, 'player1', '${gameState.player1.name}')">
+                        <button class="btn-small btn-check" data-task-id="${task.id}" data-player-id="1">
                             ${gameState.player1.name}
                         </button>
-                        <button class="btn-small btn-check" onclick="completeTask(${task.id}, 'player2', '${gameState.player2.name}')">
+                        <button class="btn-small btn-check" data-task-id="${task.id}" data-player-id="2">
                             ${gameState.player2.name}
                         </button>
                     `}
-                    <button class="btn-small btn-delete" onclick="deleteTask(${task.id})">🗑️</button>
+                    <button class="btn-small btn-delete" data-task-id="${task.id}">🗑️</button>
                 </div>
             </div>
         </div>
     `).join('');
+    
+    // Adicionar event listeners DEPOIS de renderizar
+    addTaskEventListeners();
+}
+
+// Adicionar event listeners aos botões das tarefas
+function addTaskEventListeners() {
+    // Botões de completar tarefa
+    document.querySelectorAll('button.btn-check[data-task-id][data-player-id]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const taskId = parseInt(this.getAttribute('data-task-id'));
+            const playerId = parseInt(this.getAttribute('data-player-id'));
+            const playerKey = `player${playerId}`;
+            const playerName = gameState[playerKey].name;
+            
+            console.log('🖱️ Button clicked:', { taskId, playerId, playerKey, playerName });
+            completeTask(taskId, playerKey, playerName);
+        });
+    });
+    
+    // Botões de deletar tarefa
+    document.querySelectorAll('button.btn-delete[data-task-id]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const taskId = parseInt(this.getAttribute('data-task-id'));
+            console.log('🗑️ Delete clicked:', taskId);
+            deleteTask(taskId);
+        });
+    });
 }
 
 // Challenges
@@ -424,10 +452,24 @@ function renderChallenges() {
             </div>
             <div class="challenge-reward">${challenge.coins}⭐ cada</div>
             <div class="challenge-buttons">
-                <button class="btn-complete-challenge" onclick="completeChallenge(${challenge.id})">✨ Completar</button>
+                <button class="btn-complete-challenge" data-challenge-id="${challenge.id}">✨ Completar</button>
             </div>
         </div>
     `).join('');
+    
+    // Adicionar event listeners
+    addChallengeEventListeners();
+}
+
+// Adicionar event listeners aos botões dos desafios
+function addChallengeEventListeners() {
+    document.querySelectorAll('button.btn-complete-challenge[data-challenge-id]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const challengeId = parseInt(this.getAttribute('data-challenge-id'));
+            console.log('🎯 Challenge button clicked:', challengeId);
+            completeChallenge(challengeId);
+        });
+    });
 }
 
 function getDifficultyEmoji(difficulty) {
@@ -551,12 +593,26 @@ function renderLoja() {
                 <div class="loja-item-name">${item.name}</div>
                 <div class="loja-item-description">${item.description}</div>
                 <div class="loja-item-price">${item.cost}⭐</div>
-                <button class="loja-item-button" onclick="purchaseItem(${item.id}, ${item.cost})" ${!canAfford ? 'disabled' : ''}>
+                <button class="loja-item-button btn-purchase" data-item-id="${item.id}" data-item-cost="${item.cost}" ${!canAfford ? 'disabled' : ''}>
                     ${canAfford ? 'Comprar' : 'Moedas insuficientes'}
                 </button>
             </div>
         `;
     }).join('');
+    
+    addShopEventListeners();
+}
+
+function addShopEventListeners() {
+    document.querySelectorAll('button.btn-purchase[data-item-id][data-item-cost]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const itemId = parseInt(this.getAttribute('data-item-id'));
+            const itemCost = parseInt(this.getAttribute('data-item-cost'));
+            
+            console.log('🛍️ Buy button clicked:', { itemId, itemCost });
+            purchaseItem(itemId, itemCost);
+        });
+    });
 }
 
 function purchaseItem(itemId, itemCost) {

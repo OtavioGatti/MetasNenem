@@ -313,6 +313,44 @@ async function quickSync() {
     setTimeout(() => location.reload(), 2000);
 }
 
+/**
+ * Teste 7B: Testar completar uma tarefa (DEBUG)
+ * Comando: testCompleteTask()
+ */
+async function testCompleteTask() {
+    console.clear();
+    console.log('🧪 === TESTE 7B: COMPLETAR TAREFA === 🧪\n');
+    
+    const currentPlayer = getCurrentPlayer();
+    console.log('👤 Jogador autenticado:', currentPlayer);
+    
+    if (!currentPlayer) {
+        console.error('❌ Nenhum jogador autenticado!');
+        return;
+    }
+    
+    const task = gameState.tasks.find(t => !t.completed);
+    if (!task) {
+        console.log('⚠️ Nenhuma tarefa incompleta encontrada');
+        console.log('   Tarefas:', gameState.tasks.length);
+        return;
+    }
+    
+    console.log('📋 Tarefa encontrada:', task.description);
+    console.log('   Coins antes:', gameState[`player${currentPlayer.id}`].coins);
+    
+    try {
+        // Tentar completar
+        completeTask(task.id, `player${currentPlayer.id}`, currentPlayer.name);
+        
+        console.log('\n✅ Tarefa completada!');
+        console.log('   Coins depois:', gameState[`player${currentPlayer.id}`].coins);
+        console.log('   Tarefa marcada como:', task.completed ? 'FEITA' : 'NÃO COMPLETA');
+    } catch (error) {
+        console.error('❌ Erro ao completar tarefa:', error);
+    }
+}
+
 // ========================================
 // INSTRUÇÕES
 // ========================================

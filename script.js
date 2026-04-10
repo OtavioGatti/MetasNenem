@@ -51,6 +51,48 @@ function matchesEntityId(entity, id) {
         normalizeEntityId(entity.supabaseId) === normalizedId;
 }
 
+const pendingTaskUpdates = new Map();
+
+function trackPendingTaskUpdate(task, updates) {
+    const keys = [task.id, task.supabaseId]
+        .map(normalizeEntityId)
+        .filter(Boolean);
+    
+    keys.forEach(key => pendingTaskUpdates.set(key, { ...updates }));
+}
+
+function resolvePendingTaskUpdate(task) {
+    const keys = [task?.id, task?.supabaseId]
+        .map(normalizeEntityId)
+        .filter(Boolean);
+    
+    const pending = keys
+        .map(key => pendingTaskUpdates.get(key))
+        .find(Boolean);
+    
+    if (!pending) return task;
+    
+    const remoteCompleted = task.completed;
+    const remoteCompletedBy = task.completedBy;
+    
+    if (pending.completed !== undefined) {
+        task.completed = pending.completed;
+    }
+    
+    if (pending.completedBy !== undefined) {
+        task.completedBy = pending.completedBy;
+    }
+    
+    const remoteMatches = pending.completed === undefined ||
+        (remoteCompleted === pending.completed && remoteCompletedBy === pending.completedBy);
+    
+    if (remoteMatches) {
+        keys.forEach(key => pendingTaskUpdates.delete(key));
+    }
+    
+    return task;
+}
+
 // Initialize
 async function init() {
     initSupabase();
@@ -224,7 +266,19 @@ function createTask() {
 
 function completeTask(taskId, playerId, playerName) {
     const task = gameState.tasks.find(t => matchesEntityId(t, taskId));
-    if (!task) return;
+    if (!task) {
+        console.warn('Task nÃ£o encontrada para completar:', {
+            taskId,
+            availableTaskIds: gameState.tasks.map(t => ({
+                id: t.id,
+                supabaseId: t.supabaseId,
+                description: t.description
+            }))
+        });
+        return;
+    }
+    
+    if (task.completed) return;
     
     const player = gameState[playerId];
     
@@ -247,6 +301,10 @@ function completeTask(taskId, playerId, playerName) {
         
         // Usar supabaseId se disponível, senão usar id local (para tarefas antigas)
         const taskIdToUpdate = task.supabaseId || task.id;
+        trackPendingTaskUpdate(task, {
+            completed: true,
+            completedBy: playerId
+        });
         
         supabase.updateTask(taskIdToUpdate, { completed: true, completed_by: playerId })
             .then(() => console.log('✅ Task atualizada no Supabase'))
@@ -1043,7 +1101,7 @@ function syncRemoteData(data) {
     
     // Atualizar tarefas
     if (data.tasks) {
-        gameState.tasks = data.tasks.map(t => ({
+        gameState.tasks = data.tasks.map(t => resolvePendingTaskUpdate({
             id: t.id,
             supabaseId: t.id,
             description: t.description,

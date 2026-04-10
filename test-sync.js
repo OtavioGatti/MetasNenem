@@ -34,7 +34,7 @@ async function testPlayerSync() {
         
         // Fazer upsert
         console.log('\n⬆️ Fazendo UPSERT do Player 1...');
-        await supabase.upsertPlayer(roomId, 1, {
+        const p1Response = await supabase.upsertPlayer(roomId, 1, {
             name: gameState.player1.name,
             coins: gameState.player1.coins,
             level: gameState.player1.level,
@@ -43,9 +43,10 @@ async function testPlayerSync() {
             achievements: gameState.player1.achievements,
             lastActivityDate: gameState.player1.lastActivityDate
         });
+        console.log('  Response:', p1Response);
         
         console.log('⬆️ Fazendo UPSERT do Player 2...');
-        await supabase.upsertPlayer(roomId, 2, {
+        const p2Response = await supabase.upsertPlayer(roomId, 2, {
             name: gameState.player2.name,
             coins: gameState.player2.coins,
             level: gameState.player2.level,
@@ -54,6 +55,7 @@ async function testPlayerSync() {
             achievements: gameState.player2.achievements,
             lastActivityDate: gameState.player2.lastActivityDate
         });
+        console.log('  Response:', p2Response);
         
         // Verificar players no Supabase DEPOIS
         console.log('\n📡 Buscando players no Supabase (DEPOIS)...');
@@ -71,6 +73,10 @@ async function testPlayerSync() {
             });
         } else {
             console.log('\n❌ ERRO: Players não foram salvos!');
+            console.log('💡 POSSÍVEIS CAUSAS:');
+            console.log('   1. RLS Policies bloqueando inserções');
+            console.log('   2. Erro ao tentar fazer INSERT após DELETE');
+            console.log('   Execute agora: testRLSDetailed()');
         }
     } catch (error) {
         console.error('\n❌ ERRO na sincronização:', error);
@@ -168,6 +174,73 @@ async function testRLS() {
 }
 
 /**
+ * Teste 4B: Testar RLS com mais detalhes (NOVO)
+ * Comando: testRLSDetailed()
+ */
+async function testRLSDetailed() {
+    console.clear();
+    console.log('🧪 === TESTE 4B: RLS POLICIES DETALHADO === 🧪\n');
+    
+    const roomId = getRoomId();
+    const testPayload = {
+        room_id: roomId,
+        player_number: 999,
+        name: 'Teste RLS',
+        coins: 1,
+        level: 1,
+        streak: 0,
+        tasks_completed: 0,
+        achievements: [],
+        last_activity_date: null
+    };
+    
+    console.log('📝 Tentando INSERT direto...');
+    console.log('Payload:', testPayload);
+    console.log('');
+    
+    try {
+        const response = await fetch(
+            'https://uzwuctjfhjopgjkqahqz.supabase.co/rest/v1/players',
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV6d3VjdGpmaGpvcGdqa2FhaHF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDk2MjkyODAsImV4cCI6MTcyNzQwNTI4MH0.ey0-_JHbGCi0i1Uz-I1IHis1nR5cCi6ikpXVC39-I',
+                    'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV6d3VjdGpmaGpvcGdqa2FhaHF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDk2MjkyODAsImV4cCI6MTcyNzQwNTI4MH0.ey0-_JHbGCi0i1Uz-I1IHis1nR5cCi6ikpXVC39-I',
+                    'Prefer': 'return=representation'
+                },
+                body: JSON.stringify(testPayload)
+            }
+        );
+        
+        console.log('📊 HTTP Status:', response.status);
+        console.log('📊 Status Text:', response.statusText);
+        
+        const text = await response.text();
+        console.log('📊 Response Body:', text);
+        
+        const data = text ? JSON.parse(text) : null;
+        console.log('📊 Parsed Response:', data);
+        
+        if (response.ok) {
+            console.log('\n✅ INSERT PERMITIDO - RLS OK');
+        } else if (response.status === 403) {
+            console.log('\n❌ INSERT BLOQUEADO - Erro 403 (Forbidden)');
+            console.log('   Causa: RLS Policy está restrita demais!');
+            console.log('   Execute SQL no Supabase:');
+            console.log('   ALTER TABLE players DISABLE ROW LEVEL SECURITY;');
+        } else if (response.status === 401) {
+            console.log('\n❌ Erro 401: Unauthorized');
+            console.log('   Pode ser problema com API Key');
+        } else {
+            console.log('\n❌ Erro:', response.status);
+        }
+    } catch (error) {
+        console.error('❌ Erro ao testar:', error);
+    }
+}
+
+/**
  * Teste 5: Diagnóstico Completo
  * Comando: completeDiagnostic()
  */
@@ -255,10 +328,18 @@ Comandos disponíveis:
 2️⃣  testRead()            - Testar leitura de dados
 3️⃣  testWrite()           - Testar escrita de dados
 4️⃣  testRLS()             - Testar políticas de segurança
-5️⃣  completeDiagnostic()  - Diagnóstico completo
-6️⃣  quickSync()           - Sincronizar e recarregar
+5️⃣  testRLSDetailed()     - Testar RLS com detalhes (NOVO!)
+6️⃣  completeDiagnostic()  - Diagnóstico completo
+7️⃣  quickSync()           - Sincronizar e recarregar
+
+🆘 SE PLAYERS NÃO FOREM SALVOS:
+  1. Execute: testRLSDetailed()
+  2. Se retornar 403: Execute SQL no Supabase:
+     ALTER TABLE players DISABLE ROW LEVEL SECURITY;
+     Depois: ALTER TABLE players ENABLE ROW LEVEL SECURITY;
+  3. Puis: testPlayerSync()
 
 Exemplo:
-  > testPlayerSync()
+  > testRLSDetailed()
   
 `);

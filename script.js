@@ -739,23 +739,87 @@ function joinRoom() {
         showToast('⚠️ Digite um código válido!');
         return;
     }
-    setRoomId(newRoom);
-    setupRoomUI();
-    closeModal('roomModal');
-    showToast('🔗 Sala alterada! Agora sincronizando...');
+    
+    console.log('🔄 Mudando para sala:', newRoom);
+    
+    // 1. Parar sincronização atual
     stopSync();
-    startSync();
+    console.log('✅ Sincronização anterior parada');
+    
+    // 2. Limpar dados da sala anterior
+    localStorage.removeItem('metasNenemGame');
+    gameState = {
+        player1: { name: 'Você', coins: 0, level: 1, streak: 0, lastActivityDate: null, tasksCompleted: 0, achievements: [] },
+        player2: { name: 'Namorada', coins: 0, level: 1, streak: 0, lastActivityDate: null, tasksCompleted: 0, achievements: [] },
+        tasks: [],
+        challenges: [],
+        history: [],
+        filter: 'all'
+    };
+    console.log('✅ Dados antigos limpos');
+    
+    // 3. Fazer logout (limpar autenticação)
+    localStorage.removeItem('metasnenem_current_player_id');
+    localStorage.removeItem('metasnenem_current_player_name');
+    console.log('✅ Autenticação limpa');
+    
+    // 4. Mudar para nova sala
+    setRoomId(newRoom);
+    console.log('✅ Sala alterada para:', newRoom);
+    
+    // 5. Fechar modal e recarregar
+    closeModal('roomModal');
+    document.getElementById('newRoomInput').value = '';
+    
+    showToast('🔗 Sala alterada! Reautenticando...');
+    
+    // 6. Forçar recarregamento da página para reinicializar tudo
+    setTimeout(() => {
+        location.reload();
+    }, 1000);
 }
 
 // Criar nova sala
 function createNewRoom() {
     const newRoomId = "metasnenem-" + Math.random().toString(36).substring(2, 10);
-    setRoomId(newRoomId);
-    setupRoomUI();
-    closeModal('roomModal');
-    showToast('🆕 Nova sala criada! Compartilhe o código com sua namorada');
+    
+    console.log('🆕 Criando nova sala:', newRoomId);
+    
+    // 1. Parar sincronização atual
     stopSync();
-    startSync();
+    console.log('✅ Sincronização anterior parada');
+    
+    // 2. Limpar dados da sala anterior
+    localStorage.removeItem('metasNenemGame');
+    gameState = {
+        player1: { name: 'Você', coins: 0, level: 1, streak: 0, lastActivityDate: null, tasksCompleted: 0, achievements: [] },
+        player2: { name: 'Namorada', coins: 0, level: 1, streak: 0, lastActivityDate: null, tasksCompleted: 0, achievements: [] },
+        tasks: [],
+        challenges: [],
+        history: [],
+        filter: 'all'
+    };
+    console.log('✅ Dados antigos limpos');
+    
+    // 3. Fazer logout (limpar autenticação)
+    localStorage.removeItem('metasnenem_current_player_id');
+    localStorage.removeItem('metasnenem_current_player_name');
+    console.log('✅ Autenticação limpa');
+    
+    // 4. Mudar para nova sala
+    setRoomId(newRoomId);
+    console.log('✅ Nova sala criada:', newRoomId);
+    
+    // 5. Fechar modal
+    closeModal('roomModal');
+    document.getElementById('newRoomInput').value = '';
+    
+    showToast('🆕 Nova sala criada! Reautenticando...');
+    
+    // 6. Forçar recarregamento da página para reinicializar tudo
+    setTimeout(() => {
+        location.reload();
+    }, 1000);
 }
 
 // Iniciar sincronização

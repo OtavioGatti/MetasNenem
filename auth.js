@@ -145,8 +145,9 @@ async function selectPlayerInExistingRoom() {
                 return;
             }
 
-            p1Btn.textContent = `👤 ${names[0]} (Você)`;
-            p2Btn.textContent = `👤 ${names[1]} (Você)`;
+            // Atualizar com os NOMES REAIS (não genéricos)
+            p1Btn.textContent = `👤 Eu sou ${names[0]}`;
+            p2Btn.textContent = `👤 Eu sou ${names[1]}`;
 
             // Click nos botões
             document.getElementById('selectPlayer1Btn').onclick = () => {

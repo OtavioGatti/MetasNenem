@@ -146,8 +146,16 @@ function showToast(message) {
 }
 
 function updatePlayerInitials() {
-    document.getElementById('player1-initial').textContent = gameState.player1.name.charAt(0).toUpperCase();
-    document.getElementById('player2-initial').textContent = gameState.player2.name.charAt(0).toUpperCase();
+    // Usar primeira letra do nome real, não genérico
+    const p1Initial = gameState.player1.name && gameState.player1.name !== 'Você' 
+        ? gameState.player1.name.charAt(0).toUpperCase() 
+        : 'O';
+    const p2Initial = gameState.player2.name && gameState.player2.name !== 'Namorada' 
+        ? gameState.player2.name.charAt(0).toUpperCase() 
+        : 'C';
+    
+    document.getElementById('player1-initial').textContent = p1Initial;
+    document.getElementById('player2-initial').textContent = p2Initial;
 }
 
 // Task Management

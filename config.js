@@ -19,16 +19,26 @@ function validateConfig() {
 }
 
 // ID da sala (deve ser igual para ambos os celulares)
-// Mude para um ID único seu
-let ROOM_ID = localStorage.getItem('metasnenem_room_id') || "metasnenem-" + new Date().getTime();
-
-function setRoomId(newRoomId) {
-    ROOM_ID = newRoomId;
-    localStorage.setItem('metasnenem_room_id', newRoomId);
+// Persistente no localStorage
+function getRoomId() {
+    // Sempre verificar localStorage primeiro
+    let roomId = localStorage.getItem('metasnenem_room_id');
+    
+    if (!roomId) {
+        // Se não existe, criar novo
+        roomId = "metasnenem-" + Math.random().toString(36).substring(2, 10);
+        localStorage.setItem('metasnenem_room_id', roomId);
+        console.log('🆕 Novo Room ID criado:', roomId);
+    }
+    
+    return roomId;
 }
 
-function getRoomId() {
-    return ROOM_ID;
+function setRoomId(newRoomId) {
+    if (newRoomId && typeof newRoomId === 'string') {
+        localStorage.setItem('metasnenem_room_id', newRoomId);
+        console.log('✅ Room ID alterado para:', newRoomId);
+    }
 }
 
 // Modo: 'local' (localStorage) ou 'cloud' (Supabase)

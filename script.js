@@ -36,6 +36,21 @@ const ACHIEVEMENTS_DB = {
     'team_player': { icon: '🤝', name: 'Team Player', description: 'Complete 10 tarefas compartilhadas' }
 };
 
+// Helpers de ID e listeners são declarados mais abaixo, perto do uso.
+
+function normalizeEntityId(id) {
+    if (id === null || id === undefined) return null;
+    return String(id);
+}
+
+function matchesEntityId(entity, id) {
+    const normalizedId = normalizeEntityId(id);
+    if (!normalizedId || !entity) return false;
+    
+    return normalizeEntityId(entity.id) === normalizedId ||
+        normalizeEntityId(entity.supabaseId) === normalizedId;
+}
+
 // Initialize
 async function init() {
     initSupabase();
@@ -208,7 +223,7 @@ function createTask() {
 }
 
 function completeTask(taskId, playerId, playerName) {
-    const task = gameState.tasks.find(t => t.id === taskId);
+    const task = gameState.tasks.find(t => matchesEntityId(t, taskId));
     if (!task) return;
     
     const player = gameState[playerId];
@@ -252,8 +267,8 @@ function completeTask(taskId, playerId, playerName) {
 }
 
 function deleteTask(taskId) {
-    const task = gameState.tasks.find(t => t.id === taskId);
-    gameState.tasks = gameState.tasks.filter(t => t.id !== taskId);
+    const task = gameState.tasks.find(t => matchesEntityId(t, taskId));
+    gameState.tasks = gameState.tasks.filter(t => !matchesEntityId(t, taskId));
     saveGame();
     
     // Sincronizar com Supabase
@@ -293,10 +308,10 @@ function renderTasks() {
                     ${task.completed ? `
                         <span style="color: green; font-weight: bold;">✓ Feito</span>
                     ` : `
-                        <button class="btn-small btn-check" data-task-id="${task.id}" data-player-id="1">
+                        <button class="btn-small btn-check" data-task-id="${task.supabaseId || task.id}" data-player-id="1">
                             ${gameState.player1.name}
                         </button>
-                        <button class="btn-small btn-check" data-task-id="${task.id}" data-player-id="2">
+                        <button class="btn-small btn-check" data-task-id="${task.supabaseId || task.id}" data-player-id="2">
                             ${gameState.player2.name}
                         </button>
                     `}
@@ -324,7 +339,7 @@ function addTaskEventListeners() {
     tasksList.addEventListener('click', function(e) {
         const checkBtn = e.target.closest('button.btn-check[data-task-id][data-player-id]');
         if (checkBtn) {
-            const taskId = parseInt(checkBtn.getAttribute('data-task-id'));
+            const taskId = normalizeEntityId(checkBtn.getAttribute('data-task-id'));
             const playerId = parseInt(checkBtn.getAttribute('data-player-id'));
             
             // Evitar múltiplos cliques na mesma task
@@ -349,7 +364,7 @@ function addTaskEventListeners() {
         
         const deleteBtn = e.target.closest('button.btn-delete[data-task-id]');
         if (deleteBtn) {
-            const taskId = parseInt(deleteBtn.getAttribute('data-task-id'));
+            const taskId = normalizeEntityId(deleteBtn.getAttribute('data-task-id'));
             console.log('🗑️ Task deleted:', taskId);
             deleteTask(taskId);
             return;
@@ -406,7 +421,7 @@ function createChallenge() {
 }
 
 function completeChallenge(challengeId) {
-    const challenge = gameState.challenges.find(c => c.id === challengeId);
+    const challenge = gameState.challenges.find(c => matchesEntityId(c, challengeId));
     if (!challenge || challenge.completed) return;
     
     challenge.completed = true;
@@ -498,7 +513,7 @@ function addChallengeEventListeners() {
     html.addEventListener('click', function(e) {
         const btn = e.target.closest('button.btn-complete-challenge[data-challenge-id]');
         if (btn) {
-            const challengeId = parseInt(btn.getAttribute('data-challenge-id'));
+            const challengeId = normalizeEntityId(btn.getAttribute('data-challenge-id'));
             
             // Evitar múltiplos cliques
             if (processingChallengeIds.has(challengeId)) {
@@ -1030,6 +1045,7 @@ function syncRemoteData(data) {
     if (data.tasks) {
         gameState.tasks = data.tasks.map(t => ({
             id: t.id,
+            supabaseId: t.id,
             description: t.description,
             coins: t.coins,
             type: t.type,
@@ -1044,6 +1060,7 @@ function syncRemoteData(data) {
     if (data.challenges) {
         gameState.challenges = data.challenges.map(c => ({
             id: c.id,
+            supabaseId: c.id,
             description: c.description,
             coins: c.coins,
             difficulty: c.difficulty,

@@ -5,6 +5,7 @@ class SupabaseManager {
     constructor(url, key) {
         this.url = url;
         this.key = key;
+        this.optionalWarnings = new Set();
         this.headers = {
             'Content-Type': 'application/json',
             'apikey': key,
@@ -286,6 +287,76 @@ class SupabaseManager {
         return response.json();
     }
 
+    warnOptionalOnce(key, message) {
+        if (this.optionalWarnings.has(key)) return;
+        this.optionalWarnings.add(key);
+        console.warn(message);
+    }
+
+    async deleteFromTable(table, roomId, optional = false) {
+        const response = await fetch(
+            `${this.url}/rest/v1/${table}?room_id=eq.${roomId}`,
+            {
+                method: 'DELETE',
+                headers: {
+                    ...this.headers,
+                    'Prefer': 'return=minimal'
+                }
+            }
+        );
+        if (response.ok) return { success: true };
+        if (optional) {
+            this.warnOptionalOnce(`delete-${table}`, `${table} not available for cleanup`);
+            return { success: false };
+        }
+        throw new Error(`DELETE /${table} failed: ${response.status}`);
+    }
+
+    // ============ SHOP PURCHASES ============
+    async getPurchases(roomId) {
+        const response = await fetch(
+            `${this.url}/rest/v1/shop_purchases?room_id=eq.${roomId}&order=purchased_at.desc`,
+            { headers: this.headers }
+        );
+        if (response.ok) return response.json();
+        this.warnOptionalOnce('shop_purchases-read', 'shop_purchases table not available yet');
+        return [];
+    }
+
+    async addPurchase(roomId, playerNumber, itemData) {
+        const response = await fetch(
+            `${this.url}/rest/v1/shop_purchases`,
+            {
+                method: 'POST',
+                headers: {
+                    ...this.headers,
+                    'Prefer': 'return=minimal'
+                },
+                body: JSON.stringify({
+                    room_id: roomId,
+                    player_number: playerNumber,
+                    item_id: itemData.itemId,
+                    item_name: itemData.name,
+                    item_icon: itemData.icon,
+                    cost: itemData.cost
+                })
+            }
+        );
+        if (response.ok) return { success: true };
+        this.warnOptionalOnce('shop_purchases-write', 'shop_purchases table not available for writes yet');
+        return { success: false };
+    }
+
+    async resetRoomData(roomId) {
+        // Delete children first so the room can be recreated cleanly.
+        await this.deleteFromTable('shop_purchases', roomId, true);
+        await this.deleteFromTable('history', roomId);
+        await this.deleteFromTable('tasks', roomId);
+        await this.deleteFromTable('challenges', roomId);
+        await this.deleteFromTable('players', roomId);
+        return { success: true };
+    }
+
     // ============ REAL-TIME (Polling) ============
     setupRealtimeListener(roomId, callback, interval = 2000) {
         return setInterval(async () => {
@@ -294,8 +365,9 @@ class SupabaseManager {
                 const tasks = await this.getTasks(roomId);
                 const challenges = await this.getChallenges(roomId);
                 const history = await this.getHistory(roomId);
+                const purchases = await this.getPurchases(roomId);
                 
-                callback({ players, tasks, challenges, history });
+                callback({ players, tasks, challenges, history, purchases });
             } catch (error) {
                 console.error('Erro ao sincronizar:', error);
             }

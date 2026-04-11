@@ -21,6 +21,17 @@ let gameState = {
     tasks: [],
     challenges: [],
     history: [],
+    purchases: {
+        player1: [],
+        player2: []
+    },
+    stats: {
+        challengesCompleted: 0,
+        sharedTasksCompleted: {
+            player1: 0,
+            player2: 0
+        }
+    },
     filter: 'all'
 };
 
@@ -51,6 +62,59 @@ function matchesEntityId(entity, id) {
         normalizeEntityId(entity.supabaseId) === normalizedId;
 }
 
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+function toSafeNumber(value, fallback = 0) {
+    const number = Number(value);
+    return Number.isFinite(number) ? number : fallback;
+}
+
+function getPlayerNameByKey(playerKey) {
+    return escapeHtml(gameState[playerKey]?.name || playerKey);
+}
+
+function getTaskActionId(task) {
+    return escapeHtml(task.supabaseId || task.id);
+}
+
+function normalizeGameStateShape() {
+    gameState.tasks = Array.isArray(gameState.tasks) ? gameState.tasks : [];
+    gameState.challenges = Array.isArray(gameState.challenges) ? gameState.challenges : [];
+    gameState.history = Array.isArray(gameState.history) ? gameState.history : [];
+    gameState.purchases = gameState.purchases || {};
+    gameState.purchases.player1 = Array.isArray(gameState.purchases.player1) ? gameState.purchases.player1 : [];
+    gameState.purchases.player2 = Array.isArray(gameState.purchases.player2) ? gameState.purchases.player2 : [];
+    gameState.stats = gameState.stats || {};
+    gameState.stats.challengesCompleted = toSafeNumber(gameState.stats.challengesCompleted, 0);
+    gameState.stats.sharedTasksCompleted = gameState.stats.sharedTasksCompleted || {};
+    gameState.stats.sharedTasksCompleted.player1 = toSafeNumber(gameState.stats.sharedTasksCompleted.player1, 0);
+    gameState.stats.sharedTasksCompleted.player2 = toSafeNumber(gameState.stats.sharedTasksCompleted.player2, 0);
+}
+
+function getTaskAssignedPlayers(task) {
+    const assigned = task?.assigned || 'ambos';
+    if (assigned === 'player1') return ['player1'];
+    if (assigned === 'player2') return ['player2'];
+    return ['player1', 'player2'];
+}
+
+function canPlayerCompleteTask(task, playerId) {
+    return getTaskAssignedPlayers(task).includes(playerId);
+}
+
+function isRecentLocalEntity(entity, maxAgeMs = 30000) {
+    if (entity?.supabaseId) return false;
+    const createdAt = new Date(entity?.createdAt || 0).getTime();
+    return Number.isFinite(createdAt) && Date.now() - createdAt < maxAgeMs;
+}
+
 const pendingTaskUpdates = new Map();
 
 function trackPendingTaskUpdate(task, updates) {
@@ -59,6 +123,9 @@ function trackPendingTaskUpdate(task, updates) {
         .filter(Boolean);
     
     keys.forEach(key => pendingTaskUpdates.set(key, { ...updates }));
+    setTimeout(() => {
+        keys.forEach(key => pendingTaskUpdates.delete(key));
+    }, 15000);
 }
 
 function resolvePendingTaskUpdate(task) {
@@ -114,15 +181,29 @@ function loadGame() {
     if (saved) {
         gameState = JSON.parse(saved);
     }
+    normalizeGameStateShape();
     updatePlayerInitials();
 }
 
 function saveGame() {
+    normalizeGameStateShape();
     localStorage.setItem('metasNenemGame', JSON.stringify(gameState));
 }
 
-function resetData() {
+async function resetData() {
     if (confirm('⚠️ Tem certeza? Todos os dados serão apagados!')) {
+        stopSync();
+        
+        if (USE_SUPABASE && supabase) {
+            try {
+                await supabase.resetRoomData(getRoomId());
+                console.log('Dados remotos da sala apagados');
+            } catch (error) {
+                console.error('Erro ao apagar dados remotos:', error);
+                showToast('Dados locais resetados, mas o Supabase falhou');
+            }
+        }
+        
         gameState = {
             player1: {
                 name: 'Você',
@@ -145,11 +226,19 @@ function resetData() {
             tasks: [],
             challenges: [],
             history: [],
+            purchases: { player1: [], player2: [] },
+            stats: {
+                challengesCompleted: 0,
+                sharedTasksCompleted: { player1: 0, player2: 0 }
+            },
             filter: 'all'
         };
+        clearAuth();
+        pendingTaskUpdates.clear();
         saveGame();
         renderAll();
         closeModal('settingsModal');
+        setTimeout(() => location.reload(), 700);
         showToast('✨ Dados resetados!');
     }
 }
@@ -218,7 +307,7 @@ function updatePlayerInitials() {
 // Task Management
 function createTask() {
     const description = document.getElementById('taskDescription').value.trim();
-    const coins = parseInt(document.getElementById('taskCoins').value) || 10;
+    const coins = Math.max(1, parseInt(document.getElementById('taskCoins').value) || 10);
     const type = document.getElementById('taskType').value;
     const assigned = document.getElementById('taskAssigned').value;
     
@@ -280,6 +369,11 @@ function completeTask(taskId, playerId, playerName) {
     
     if (task.completed) return;
     
+    if (!canPlayerCompleteTask(task, playerId)) {
+        showToast('Esta tarefa nao esta atribuida a esse jogador');
+        return;
+    }
+    
     const player = gameState[playerId];
     
     task.completed = true;
@@ -287,6 +381,10 @@ function completeTask(taskId, playerId, playerName) {
     
     player.coins += task.coins;
     player.tasksCompleted += 1;
+    
+    if (task.assigned === 'ambos' || task.type === 'casal') {
+        gameState.stats.sharedTasksCompleted[playerId] += 1;
+    }
     
     updateLevel(playerId);
     updateStreak(playerId);
@@ -342,6 +440,38 @@ function deleteTask(taskId) {
     showToast('🗑️ Tarefa removida');
 }
 
+function renderTaskCompletionButtons(task) {
+    if (task.completed) {
+        const completedByName = task.completedBy ? getPlayerNameByKey(task.completedBy) : '';
+        const label = completedByName ? ` por ${completedByName}` : '';
+        return `<span style="color: green; font-weight: bold;">Feito${label}</span>`;
+    }
+    
+    const actionId = getTaskActionId(task);
+    const assignedPlayers = getTaskAssignedPlayers(task);
+    const canPlayer1Complete = assignedPlayers.includes('player1');
+    const canPlayer2Complete = assignedPlayers.includes('player2');
+    const buttons = [];
+    
+    if (canPlayer1Complete) {
+        buttons.push(`
+            <button class="btn-small btn-check" data-task-id="${actionId}" data-player-id="1">
+                ${getPlayerNameByKey('player1')}
+            </button>
+        `);
+    }
+    
+    if (canPlayer2Complete) {
+        buttons.push(`
+            <button class="btn-small btn-check" data-task-id="${actionId}" data-player-id="2">
+                ${getPlayerNameByKey('player2')}
+            </button>
+        `);
+    }
+    
+    return buttons.join('');
+}
+
 function renderTasks() {
     let tasks = gameState.tasks;
     
@@ -354,30 +484,35 @@ function renderTasks() {
     }
     
     const tasksList = document.getElementById('tasks-list');
-    tasksList.innerHTML = tasks.map(task => `
+    if (!tasksList) return;
+    
+    if (tasks.length === 0) {
+        tasksList.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">Nenhuma tarefa encontrada</p>';
+        return;
+    }
+    
+    tasksList.innerHTML = tasks.map(task => {
+        const actionId = getTaskActionId(task);
+        const type = task.type === 'casal' ? 'casal' : 'pessoal';
+        const typeLabel = type === 'casal' ? 'Casal' : 'Pessoal';
+        const coins = toSafeNumber(task.coins, 0);
+        
+        return `
         <div class="task-card ${task.completed ? 'concluido' : ''}">
             <div class="task-header">
-                <span class="task-type ${task.type}">${task.type === 'casal' ? '💑 Casal' : '👤 Pessoal'}</span>
+                <span class="task-type ${type}">${typeLabel}</span>
             </div>
-            <div class="task-description">${task.description}</div>
+            <div class="task-description">${escapeHtml(task.description)}</div>
             <div class="task-footer">
-                <span class="task-coins">${task.coins}⭐</span>
+                <span class="task-coins">${coins}⭐</span>
                 <div class="task-actions">
-                    ${task.completed ? `
-                        <span style="color: green; font-weight: bold;">✓ Feito</span>
-                    ` : `
-                        <button class="btn-small btn-check" data-task-id="${task.supabaseId || task.id}" data-player-id="1">
-                            ${gameState.player1.name}
-                        </button>
-                        <button class="btn-small btn-check" data-task-id="${task.supabaseId || task.id}" data-player-id="2">
-                            ${gameState.player2.name}
-                        </button>
-                    `}
-                    <button class="btn-small btn-delete" data-task-id="${task.id}">🗑️</button>
+                    ${renderTaskCompletionButtons(task)}
+                    <button class="btn-small btn-delete" data-task-id="${actionId}">🗑️</button>
                 </div>
             </div>
         </div>
-    `).join('');
+    `;
+    }).join('');
     
     // Adicionar event listeners DEPOIS de renderizar
     addTaskEventListeners();
@@ -435,7 +570,7 @@ function addTaskEventListeners() {
 // Challenges
 function createChallenge() {
     const description = document.getElementById('challengeDescription').value.trim();
-    const coins = parseInt(document.getElementById('challengeCoins').value) || 20;
+    const coins = Math.max(1, parseInt(document.getElementById('challengeCoins').value) || 20);
     const difficulty = document.getElementById('challengeDifficulty').value;
     
     if (!description) {
@@ -486,6 +621,7 @@ function completeChallenge(challengeId) {
     
     gameState.player1.coins += challenge.coins;
     gameState.player2.coins += challenge.coins;
+    gameState.stats.challengesCompleted += 1;
     
     updateLevel('player1');
     updateLevel('player2');
@@ -547,12 +683,12 @@ function renderChallenges() {
     html.innerHTML = challenges.map(challenge => `
         <div class="challenge-card">
             <div class="challenge-header">
-                <h3>${challenge.description}</h3>
+                <h3>${escapeHtml(challenge.description)}</h3>
                 <span class="challenge-difficulty">${getDifficultyEmoji(challenge.difficulty)} ${challenge.difficulty}</span>
             </div>
             <div class="challenge-reward">${challenge.coins}⭐ cada</div>
             <div class="challenge-buttons">
-                <button class="btn-complete-challenge" data-challenge-id="${challenge.id}">✨ Completar</button>
+                <button class="btn-complete-challenge" data-challenge-id="${escapeHtml(challenge.supabaseId || challenge.id)}">Completar</button>
             </div>
         </div>
     `).join('');
@@ -661,6 +797,12 @@ function checkAchievements(playerId) {
     if (player.coins >= 500 && !player.achievements.includes('coins_500')) {
         newAchievements.push('coins_500');
     }
+    if (gameState.stats.challengesCompleted >= 5 && !player.achievements.includes('challenge_5')) {
+        newAchievements.push('challenge_5');
+    }
+    if (gameState.stats.sharedTasksCompleted[playerId] >= 10 && !player.achievements.includes('team_player')) {
+        newAchievements.push('team_player');
+    }
     
     newAchievements.forEach(achievement => {
         player.achievements.push(achievement);
@@ -682,6 +824,11 @@ const SHOP_ITEMS = [
 ];
 
 // Shop Functions
+function getPlayerPurchases(playerId) {
+    normalizeGameStateShape();
+    return gameState.purchases[`player${playerId}`] || [];
+}
+
 function updatePlayerCoinsDisplay() {
     const currentPlayer = getCurrentPlayer();
     if (!currentPlayer) return;
@@ -704,21 +851,34 @@ function renderLoja() {
     }
     
     const playerCoins = gameState[`player${currentPlayer.id}`].coins;
+    const purchases = getPlayerPurchases(currentPlayer.id);
+    const inventoryHtml = purchases.length > 0 ? `
+        <div style="grid-column: 1/-1; background: #f8fafc; border-radius: 12px; padding: 16px;">
+            <strong>Minhas recompensas compradas</strong>
+            <div style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px;">
+                ${purchases.map(purchase => `
+                    <span style="background: white; border: 1px solid #e5e7eb; border-radius: 999px; padding: 6px 10px;">
+                        ${escapeHtml(purchase.icon)} ${escapeHtml(purchase.name)}
+                    </span>
+                `).join('')}
+            </div>
+        </div>
+    ` : '';
     
     lojaItemsContainer.innerHTML = SHOP_ITEMS.map(item => {
         const canAfford = playerCoins >= item.cost;
         return `
             <div class="loja-item">
-                <div class="loja-item-icon">${item.icon}</div>
-                <div class="loja-item-name">${item.name}</div>
-                <div class="loja-item-description">${item.description}</div>
-                <div class="loja-item-price">${item.cost}⭐</div>
+                <div class="loja-item-icon">${escapeHtml(item.icon)}</div>
+                <div class="loja-item-name">${escapeHtml(item.name)}</div>
+                <div class="loja-item-description">${escapeHtml(item.description)}</div>
+                <div class="loja-item-price">${toSafeNumber(item.cost, 0)}⭐</div>
                 <button class="loja-item-button btn-purchase" data-item-id="${item.id}" data-item-cost="${item.cost}" ${!canAfford ? 'disabled' : ''}>
                     ${canAfford ? 'Comprar' : 'Moedas insuficientes'}
                 </button>
             </div>
         `;
-    }).join('');
+    }).join('') + inventoryHtml;
     
     addShopEventListeners();
 }
@@ -781,6 +941,15 @@ function purchaseItem(itemId, itemCost) {
     
     // Deduzir moedas do jogador autenticado
     playerData.coins -= itemCost;
+    const purchase = {
+        id: Date.now(),
+        itemId: item.id,
+        name: item.name,
+        icon: item.icon,
+        cost: itemCost,
+        purchasedAt: new Date().toISOString()
+    };
+    gameState.purchases[playerId].unshift(purchase);
     saveGame();
     
     // Registrar compra no histórico
@@ -798,6 +967,12 @@ function purchaseItem(itemId, itemCost) {
             .catch(e => console.error('❌ ERRO ao sincronizar compra:', e));
     }
     
+    if (USE_SUPABASE && supabase) {
+        supabase.addPurchase(getRoomId(), currentPlayer.id, purchase)
+            .then(() => console.log('Compra registrada no inventario remoto'))
+            .catch(e => console.error('Erro ao registrar compra:', e));
+    }
+    
     updatePlayerCoinsDisplay();
     renderLoja();
     showToast(`🎉 ${currentPlayer.name} comprou ${item.name}! 🛍️`);
@@ -810,9 +985,9 @@ function renderAchievements() {
     Object.entries(ACHIEVEMENTS_DB).forEach(([key, ach]) => {
         const unlocked = gameState.player1.achievements.includes(key) || gameState.player2.achievements.includes(key);
         html += `
-            <div class="achievement ${unlocked ? '' : 'locked'}" title="${ach.description}">
-                <div class="achievement-icon">${ach.icon}</div>
-                <div class="achievement-name">${ach.name}</div>
+            <div class="achievement ${unlocked ? '' : 'locked'}" title="${escapeHtml(ach.description)}">
+                <div class="achievement-icon">${escapeHtml(ach.icon)}</div>
+                <div class="achievement-name">${escapeHtml(ach.name)}</div>
             </div>
         `;
     });
@@ -853,7 +1028,7 @@ function renderHistory() {
         <div class="timeline-item">
             <div class="timeline-dot">📌</div>
             <div class="timeline-content">
-                <div class="timeline-title">${item.action}</div>
+                <div class="timeline-title">${escapeHtml(item.action)}</div>
                 <div class="timeline-date">${formatDate(item.timestamp)}</div>
             </div>
         </div>
@@ -966,6 +1141,8 @@ function joinRoom() {
         tasks: [],
         challenges: [],
         history: [],
+        purchases: { player1: [], player2: [] },
+        stats: { challengesCompleted: 0, sharedTasksCompleted: { player1: 0, player2: 0 } },
         filter: 'all'
     };
     console.log('✅ Dados antigos limpos');
@@ -1015,6 +1192,8 @@ function createNewRoom() {
         tasks: [],
         challenges: [],
         history: [],
+        purchases: { player1: [], player2: [] },
+        stats: { challengesCompleted: 0, sharedTasksCompleted: { player1: 0, player2: 0 } },
         filter: 'all'
     };
     console.log('✅ Dados antigos limpos');
@@ -1068,6 +1247,7 @@ function stopSync() {
 // Sincronizar dados remotos
 function syncRemoteData(data) {
     if (!data.players || data.players.length === 0) return;
+    normalizeGameStateShape();
     
     const remote = data.players;
     
@@ -1101,7 +1281,8 @@ function syncRemoteData(data) {
     
     // Atualizar tarefas
     if (data.tasks) {
-        gameState.tasks = data.tasks.map(t => resolvePendingTaskUpdate({
+        const localPendingTasks = gameState.tasks.filter(isRecentLocalEntity);
+        const remoteTasks = data.tasks.map(t => resolvePendingTaskUpdate({
             id: t.id,
             supabaseId: t.id,
             description: t.description,
@@ -1112,11 +1293,13 @@ function syncRemoteData(data) {
             completedBy: t.completed_by,
             createdAt: t.created_at
         }));
+        gameState.tasks = [...localPendingTasks, ...remoteTasks];
     }
     
     // Atualizar desafios
     if (data.challenges) {
-        gameState.challenges = data.challenges.map(c => ({
+        const localPendingChallenges = gameState.challenges.filter(isRecentLocalEntity);
+        const remoteChallenges = data.challenges.map(c => ({
             id: c.id,
             supabaseId: c.id,
             description: c.description,
@@ -1125,6 +1308,7 @@ function syncRemoteData(data) {
             completed: c.completed,
             createdAt: c.created_at
         }));
+        gameState.challenges = [...localPendingChallenges, ...remoteChallenges];
     }
     
     // Atualizar histórico
@@ -1134,6 +1318,21 @@ function syncRemoteData(data) {
             action: h.action,
             timestamp: h.timestamp
         }));
+    }
+    
+    if (Array.isArray(data.purchases) && data.purchases.length > 0) {
+        gameState.purchases = { player1: [], player2: [] };
+        data.purchases.forEach(purchase => {
+            const key = purchase.player_number === 2 ? 'player2' : 'player1';
+            gameState.purchases[key].push({
+                id: purchase.id,
+                itemId: purchase.item_id,
+                name: purchase.item_name,
+                icon: purchase.item_icon,
+                cost: purchase.cost,
+                purchasedAt: purchase.purchased_at
+            });
+        });
     }
     
     renderAll();

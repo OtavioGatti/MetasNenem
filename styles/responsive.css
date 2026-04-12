@@ -1,0 +1,417 @@
+/**
+ * Melhorias de Responsividade Mobile
+ * Otimizações para telas pequenas
+ */
+
+/* Tablets e telas médias */
+@media (max-width: 1024px) {
+    .container {
+        max-width: 100%;
+        padding: 0 15px;
+    }
+
+    .players-section {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .vs {
+        display: none;
+    }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    /* Header */
+    .header {
+        padding: 15px 10px;
+    }
+
+    .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+
+    .title {
+        font-size: 1.5em;
+    }
+
+    .subtitle {
+        font-size: 0.9em;
+    }
+
+    .btn-settings {
+        top: 15px;
+        right: 15px;
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+    }
+
+    /* Player Cards */
+    .player-card {
+        padding: 15px;
+    }
+
+    .player-header {
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .player-avatar {
+        width: 60px;
+        height: 60px;
+        font-size: 24px;
+    }
+
+    .player-stats {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+    }
+
+    .stat {
+        padding: 10px 5px;
+    }
+
+    .stat-label {
+        font-size: 11px;
+    }
+
+    .stat-value {
+        font-size: 18px;
+    }
+
+    /* Navigation Tabs */
+    .nav-tabs {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+        padding: 10px;
+    }
+
+    .tab-btn {
+        padding: 12px 8px;
+        font-size: 13px;
+    }
+
+    /* Content */
+    .content {
+        padding: 15px 10px;
+    }
+
+    .tab-content h2 {
+        font-size: 1.3em;
+        margin-bottom: 15px;
+    }
+
+    /* Filters */
+    .filters {
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 15px;
+    }
+
+    .filter-btn {
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+
+    /* Task Cards */
+    .task-card {
+        padding: 12px;
+    }
+
+    .task-header {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .task-type,
+    .task-priority {
+        font-size: 11px;
+        padding: 4px 8px;
+    }
+
+    .task-description {
+        font-size: 13px;
+        margin: 10px 0;
+    }
+
+    .task-footer {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+    }
+
+    .task-actions {
+        width: 100%;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .btn-small {
+        padding: 8px 12px;
+        font-size: 12px;
+        flex: 1;
+        min-width: 100px;
+    }
+
+    /* Challenge Cards */
+    .couple-challenges {
+        grid-template-columns: 1fr;
+    }
+
+    .challenge-card {
+        padding: 15px;
+    }
+
+    .challenge-header {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .challenge-header h3 {
+        font-size: 14px;
+    }
+
+    .challenge-difficulty {
+        font-size: 12px;
+    }
+
+    /* Modal */
+    .modal-content {
+        width: 95%;
+        max-width: none;
+        margin: 20px auto;
+        padding: 20px 15px;
+    }
+
+    .modal-content h2 {
+        font-size: 1.3em;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-group label {
+        font-size: 13px;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        padding: 10px;
+        font-size: 14px;
+    }
+
+    /* Buttons */
+    .btn-primary,
+    .btn-novo {
+        width: 100%;
+        padding: 12px;
+        font-size: 14px;
+    }
+
+    /* Loja */
+    .loja-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .loja-item {
+        padding: 12px;
+    }
+
+    .loja-item-icon {
+        font-size: 32px;
+    }
+
+    .loja-item-name {
+        font-size: 13px;
+    }
+
+    .loja-item-description {
+        font-size: 11px;
+    }
+
+    /* Achievements */
+    .achievements-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+    }
+
+    .achievement {
+        padding: 12px;
+    }
+
+    .achievement-icon {
+        font-size: 28px;
+    }
+
+    .achievement-name {
+        font-size: 11px;
+    }
+
+    /* Timeline */
+    .timeline-item {
+        padding: 12px;
+    }
+
+    .timeline-dot {
+        width: 30px;
+        height: 30px;
+        font-size: 14px;
+    }
+
+    .timeline-title {
+        font-size: 13px;
+    }
+
+    .timeline-date {
+        font-size: 11px;
+    }
+
+    /* Room Info */
+    .room-info {
+        flex-direction: column;
+        gap: 10px;
+        padding: 10px;
+    }
+
+    .btn-room {
+        width: 100%;
+    }
+
+    /* Backup buttons */
+    .backup-buttons {
+        flex-direction: column;
+    }
+
+    .btn-backup {
+        width: 100%;
+    }
+
+    /* Toast notifications */
+    #toast {
+        left: 10px;
+        right: 10px;
+        bottom: 10px;
+        max-width: none;
+        font-size: 13px;
+        padding: 12px;
+    }
+
+    /* Task search */
+    .task-search-container {
+        margin-bottom: 10px;
+    }
+
+    #taskSearch {
+        padding: 10px;
+        font-size: 14px;
+    }
+}
+
+/* Mobile pequeno */
+@media (max-width: 480px) {
+    .title {
+        font-size: 1.3em;
+    }
+
+    .player-avatar {
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+    }
+
+    .nav-tabs {
+        grid-template-columns: 1fr;
+    }
+
+    .tab-btn {
+        padding: 10px;
+    }
+
+    .loja-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .achievements-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .btn-small {
+        min-width: 80px;
+        padding: 6px 10px;
+        font-size: 11px;
+    }
+}
+
+/* Melhorias de toque */
+@media (hover: none) and (pointer: coarse) {
+    /* Aumentar áreas de toque */
+    button,
+    .btn-small,
+    .filter-btn,
+    .tab-btn {
+        min-height: 44px;
+        padding: 12px 16px;
+    }
+
+    /* Remover hover effects em dispositivos touch */
+    button:hover,
+    .btn-small:hover,
+    .filter-btn:hover {
+        transform: none;
+    }
+
+    button:active,
+    .btn-small:active,
+    .filter-btn:active {
+        transform: scale(0.98);
+    }
+}
+
+/* Landscape mode em mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+    .modal-content {
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    .players-section {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .vs {
+        display: flex;
+    }
+}
+
+/* Print styles */
+@media print {
+    .header,
+    .nav-tabs,
+    .btn-settings,
+    .btn-novo,
+    .task-actions,
+    .modal {
+        display: none !important;
+    }
+
+    body {
+        background: white;
+        color: black;
+    }
+
+    .task-card,
+    .player-card,
+    .challenge-card {
+        break-inside: avoid;
+        border: 1px solid #ccc;
+        box-shadow: none;
+    }
+}

@@ -1408,9 +1408,12 @@ function stopSync() {
 function syncRemoteData(data) {
     if (!data.players || data.players.length === 0) return;
     normalizeGameStateShape();
-    
+
     const remote = data.players;
-    
+
+    // Salvar estado anterior para detectar mudanças
+    const previousState = JSON.parse(JSON.stringify(gameState));
+
     // Atualizar player 1
     const p1 = remote.find(p => p.player_number === 1);
     if (p1) {
@@ -1424,7 +1427,7 @@ function syncRemoteData(data) {
             achievements: p1.achievements || []
         };
     }
-    
+
     // Atualizar player 2
     const p2 = remote.find(p => p.player_number === 2);
     if (p2) {
@@ -1496,7 +1499,12 @@ function syncRemoteData(data) {
             });
         });
     }
-    
+
+    // Verificar atividade do parceiro e notificar
+    if (typeof checkPartnerActivity === 'function') {
+        checkPartnerActivity(gameState, previousState);
+    }
+
     renderAll();
 }
 

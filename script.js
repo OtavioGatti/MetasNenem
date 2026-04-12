@@ -155,11 +155,6 @@ async function init() {
     validateConfig();
     loadGame();
 
-    // Inicializar tema
-    if (typeof initTheme === 'function') {
-        initTheme();
-    }
-
     // Autenticar jogador antes de renderizar
     await initializeAuth();
 
@@ -171,11 +166,6 @@ async function init() {
     // Inicializar busca de tarefas
     if (typeof setupTaskSearch === 'function') {
         setupTaskSearch();
-    }
-
-    // Criar botão de toggle de tema
-    if (typeof createThemeToggleButton === 'function') {
-        createThemeToggleButton();
     }
 }
 

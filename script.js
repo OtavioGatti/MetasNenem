@@ -154,14 +154,19 @@ async function init() {
     initSupabase();
     validateConfig();
     loadGame();
-    
+
     // Autenticar jogador antes de renderizar
     await initializeAuth();
-    
+
     setupRoomUI();
     renderAll();
     checkDailyStreak();
     startSync();
+    
+    // Inicializar busca de tarefas
+    if (typeof setupTaskSearch === 'function') {
+        setupTaskSearch();
+    }
 }
 
 // Local Storage
@@ -469,11 +474,20 @@ function completeTask(taskId, playerId, playerName) {
     }
 }
 
-function deleteTask(taskId) {
+async function deleteTask(taskId) {
     const task = gameState.tasks.find(t => matchesEntityId(t, taskId));
+    
+    // Confirmar antes de deletar
+    const confirmed = await confirmAction('Tem certeza que deseja excluir esta tarefa? Esta ação não pode ser desfeita.', 'Excluir Tarefa');
+    
+    if (!confirmed) {
+        console.log('⚠️ Deleção cancelada pelo usuário');
+        return;
+    }
+    
     gameState.tasks = gameState.tasks.filter(t => !matchesEntityId(t, taskId));
     saveGame();
-    
+
     // Sincronizar com Supabase
     if (USE_SUPABASE && supabase && task) {
         // Usar supabaseId se disponível
@@ -482,7 +496,7 @@ function deleteTask(taskId) {
             .then(() => console.log('✅ Tarefa apagada do Supabase'))
             .catch(err => console.error('❌ ERRO ao deletar tarefa:', err, {taskId: taskIdToDelete, supabaseId: task.supabaseId}));
     }
-    
+
     renderTasks();
     showToast('🗑️ Tarefa removida');
 }
@@ -552,6 +566,11 @@ function renderTasks() {
         });
     }
 
+    // Aplicar busca se houver query
+    if (currentSearchQuery) {
+        tasks = filterTasksWithSearch(tasks);
+    }
+
     if (gameState.filter === 'pessoal') {
         tasks = tasks.filter(t => t.type === 'pessoal');
     } else if (gameState.filter === 'casal') {
@@ -564,7 +583,10 @@ function renderTasks() {
     if (!tasksList) return;
 
     if (tasks.length === 0) {
-        tasksList.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">Nenhuma tarefa encontrada</p>';
+        const message = currentSearchQuery 
+            ? `Nenhuma tarefa encontrada para "${currentSearchQuery}"`
+            : 'Nenhuma tarefa encontrada';
+        tasksList.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: #666;">${message}</p>`;
         return;
     }
 

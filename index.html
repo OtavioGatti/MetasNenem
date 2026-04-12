@@ -98,6 +98,9 @@
             <!-- Tarefas Tab -->
             <section id="tarefas" class="tab-content active">
                 <h2>Tarefas Disponíveis</h2>
+                <div class="task-search-container">
+                    <input type="text" id="taskSearch" placeholder="🔍 Buscar tarefas...">
+                </div>
                 <div class="filters">
                     <button class="filter-btn active" onclick="filterTasks('all')">Todas</button>
                     <button class="filter-btn" onclick="filterTasks('pessoal')">Pessoal</button>
@@ -152,7 +155,16 @@
                         <span id="currentPlayerDisplay">Carregando...</span>
                     </div>
                     <button class="btn-danger" onclick="logoutPlayer()" style="width: 100%; margin-bottom: 10px;">🔄 Trocar de Jogador</button>
-                    <button class="btn-danger" onclick="resetData()">🗑️ Limpar Todos os Dados</button>
+                    
+                    <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #e5e7eb;">
+                        <strong style="display: block; margin-bottom: 10px; color: var(--primary);">💾 Backup e Restore</strong>
+                        <div class="backup-buttons">
+                            <button class="btn-backup btn-export" onclick="exportBackup()">📥 Exportar Dados</button>
+                            <button class="btn-backup btn-import" onclick="importBackup()">📤 Importar Dados</button>
+                        </div>
+                    </div>
+                    
+                    <button class="btn-danger" onclick="resetData()" style="margin-top: 20px;">🗑️ Limpar Todos os Dados</button>
                 </div>
             </div>
         </div>
@@ -273,6 +285,7 @@
     </div>
 
     <script src="src/auth/auth.js"></script>
+    <script src="src/ui/improvements.js"></script>
     <script src="script.js"></script>
     <script src="src/utils/debug.js"></script>
     <script src="src/utils/diagnostico.js"></script>

@@ -295,49 +295,56 @@ function updatePlayerInitials() {
 
 // Task Management
 function createTask() {
-    const description = document.getElementById('taskDescription').value.trim();
-    const coins = Math.max(1, parseInt(document.getElementById('taskCoins').value) || 10);
-    const type = document.getElementById('taskType').value;
+    try {
+        const description = document.getElementById('taskDescription').value.trim();
+        const coins = Math.max(1, parseInt(document.getElementById('taskCoins').value) || 10);
+        const type = document.getElementById('taskType').value;
 
-    if (!description) {
-        showToast('⚠️ Descreva a tarefa!');
-        return;
+        if (!description) {
+            showToast('⚠️ Descreva a tarefa!');
+            return;
+        }
+
+        const task = {
+            id: Date.now(), // ID local para referência rápida
+            supabaseId: null, // ID real do Supabase (será preenchido após criar)
+            description,
+            coins,
+            type,
+            completed: false,
+            completedBy: null,
+            createdAt: new Date().toISOString()
+        };
+
+        console.log('📝 Criando tarefa:', task);
+
+        gameState.tasks.push(task);
+        saveGame();
+
+        // Sincronizar com Supabase e atualizar supabaseId
+        if (USE_SUPABASE && supabase) {
+            const roomId = getRoomId();
+            supabase.createTask(roomId, task)
+                .then(created => {
+                    if (created && created.id) {
+                        // Atualizar com o UUID real do Supabase
+                        task.supabaseId = created.id;
+                        saveGame();
+                        console.log('✅ Task local atualizada com UUID do Supabase:', created.id);
+                    }
+                })
+                .catch(err => console.error('❌ ERRO ao criar tarefa no Supabase:', err));
+        }
+
+        renderTasks();
+        closeModal('newTaskModal');
+        document.getElementById('taskDescription').value = '';
+        document.getElementById('taskCoins').value = '10';
+        showToast('✅ Tarefa criada!');
+    } catch (error) {
+        console.error('❌ Erro ao criar tarefa:', error);
+        showToast('❌ Erro ao criar tarefa: ' + error.message);
     }
-
-    const task = {
-        id: Date.now(), // ID local para referência rápida
-        supabaseId: null, // ID real do Supabase (será preenchido após criar)
-        description,
-        coins,
-        type,
-        completed: false,
-        completedBy: null,
-        createdAt: new Date().toISOString()
-    };
-
-    gameState.tasks.push(task);
-    saveGame();
-
-    // Sincronizar com Supabase e atualizar supabaseId
-    if (USE_SUPABASE && supabase) {
-        const roomId = getRoomId();
-        supabase.createTask(roomId, task)
-            .then(created => {
-                if (created && created.id) {
-                    // Atualizar com o UUID real do Supabase
-                    task.supabaseId = created.id;
-                    saveGame();
-                    console.log('✅ Task local atualizada com UUID do Supabase:', created.id);
-                }
-            })
-            .catch(err => console.error('❌ ERRO ao criar tarefa no Supabase:', err));
-    }
-
-    renderTasks();
-    closeModal('newTaskModal');
-    document.getElementById('taskDescription').value = '';
-    document.getElementById('taskCoins').value = '10';
-    showToast('✅ Tarefa criada!');
 }
 
 function completeTask(taskId, playerId, playerName) {

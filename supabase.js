@@ -138,6 +138,7 @@ class SupabaseManager {
                         description: taskData.description,
                         coins: taskData.coins,
                         type: taskData.type,
+                        created_by: taskData.createdBy,
                         completed: false
                     })
                 }

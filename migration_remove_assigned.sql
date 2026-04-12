@@ -1,8 +1,11 @@
--- Migration: Remove 'assigned' column from tasks table
+-- Migration: Remove 'assigned' column and add 'created_by' column
 -- Run this in Supabase SQL Editor if you already have the table created
 
 -- Remove the 'assigned' column
 ALTER TABLE tasks DROP COLUMN IF EXISTS assigned;
+
+-- Add 'created_by' column if it doesn't exist
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS created_by TEXT;
 
 -- Update completed_by constraint to allow 'both'
 ALTER TABLE tasks DROP CONSTRAINT IF EXISTS tasks_completed_by_check;

@@ -305,12 +305,15 @@ function createTask() {
             return;
         }
 
+        const currentPlayer = getCurrentPlayer();
+
         const task = {
             id: Date.now(), // ID local para referência rápida
             supabaseId: null, // ID real do Supabase (será preenchido após criar)
             description,
             coins,
             type,
+            createdBy: currentPlayer ? `player${currentPlayer.id}` : null, // Quem criou a tarefa
             completed: false,
             completedBy: null,
             createdAt: new Date().toISOString()
@@ -537,13 +540,13 @@ function renderTasks() {
     if (currentPlayer) {
         const playerKey = `player${currentPlayer.id}`;
         tasks = tasks.filter(t => {
-            // Tarefas pessoais: mostrar apenas as que pertencem ao jogador
-            if (t.type === 'pessoal') {
-                return t.completedBy === playerKey || !t.completed;
-            }
             // Tarefas de casal: mostrar todas
             if (t.type === 'casal') {
                 return true;
+            }
+            // Tarefas pessoais: mostrar apenas as criadas pelo jogador ou completadas por ele
+            if (t.type === 'pessoal') {
+                return t.createdBy === playerKey || t.completedBy === playerKey;
             }
             return true;
         });
@@ -1374,6 +1377,7 @@ function syncRemoteData(data) {
             description: t.description,
             coins: t.coins,
             type: t.type,
+            createdBy: t.created_by,
             completed: t.completed,
             completedBy: t.completed_by,
             createdAt: t.created_at

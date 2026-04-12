@@ -98,17 +98,6 @@ function normalizeGameStateShape() {
     gameState.stats.sharedTasksCompleted.player2 = toSafeNumber(gameState.stats.sharedTasksCompleted.player2, 0);
 }
 
-function getTaskAssignedPlayers(task) {
-    const assigned = task?.assigned || 'ambos';
-    if (assigned === 'player1') return ['player1'];
-    if (assigned === 'player2') return ['player2'];
-    return ['player1', 'player2'];
-}
-
-function canPlayerCompleteTask(task, playerId) {
-    return getTaskAssignedPlayers(task).includes(playerId);
-}
-
 function isRecentLocalEntity(entity, maxAgeMs = 30000) {
     if (entity?.supabaseId) return false;
     const createdAt = new Date(entity?.createdAt || 0).getTime();
@@ -309,28 +298,26 @@ function createTask() {
     const description = document.getElementById('taskDescription').value.trim();
     const coins = Math.max(1, parseInt(document.getElementById('taskCoins').value) || 10);
     const type = document.getElementById('taskType').value;
-    const assigned = document.getElementById('taskAssigned').value;
-    
+
     if (!description) {
         showToast('⚠️ Descreva a tarefa!');
         return;
     }
-    
+
     const task = {
         id: Date.now(), // ID local para referência rápida
         supabaseId: null, // ID real do Supabase (será preenchido após criar)
         description,
         coins,
         type,
-        assigned,
         completed: false,
         completedBy: null,
         createdAt: new Date().toISOString()
     };
-    
+
     gameState.tasks.push(task);
     saveGame();
-    
+
     // Sincronizar com Supabase e atualizar supabaseId
     if (USE_SUPABASE && supabase) {
         const roomId = getRoomId();
@@ -345,7 +332,7 @@ function createTask() {
             })
             .catch(err => console.error('❌ ERRO ao criar tarefa no Supabase:', err));
     }
-    
+
     renderTasks();
     closeModal('newTaskModal');
     document.getElementById('taskDescription').value = '';
@@ -368,58 +355,109 @@ function completeTask(taskId, playerId, playerName) {
     }
     
     if (task.completed) return;
-    
-    if (!canPlayerCompleteTask(task, playerId)) {
-        showToast('Esta tarefa nao esta atribuida a esse jogador');
-        return;
-    }
-    
+
     const player = gameState[playerId];
-    
-    task.completed = true;
-    task.completedBy = playerId;
-    
-    player.coins += task.coins;
-    player.tasksCompleted += 1;
-    
-    if (task.assigned === 'ambos' || task.type === 'casal') {
-        gameState.stats.sharedTasksCompleted[playerId] += 1;
+
+    // Se for tarefa de casal, ambos completam e ambos recebem coins
+    if (task.type === 'casal') {
+        task.completed = true;
+        task.completedBy = 'both';
+
+        // Ambos recebem coins
+        gameState.player1.coins += task.coins;
+        gameState.player2.coins += task.coins;
+        gameState.player1.tasksCompleted += 1;
+        gameState.player2.tasksCompleted += 1;
+
+        gameState.stats.sharedTasksCompleted.player1 += 1;
+        gameState.stats.sharedTasksCompleted.player2 += 1;
+
+        // Update levels e streaks para ambos
+        updateLevel('player1');
+        updateLevel('player2');
+        updateStreak('player1');
+        updateStreak('player2');
+
+        checkAchievements('player1');
+        checkAchievements('player2');
+
+        addHistory(`💑 ${gameState.player1.name} e ${gameState.player2.name} completaram "${task.description}" +${task.coins}⭐ cada`);
+        saveGame();
+
+        // Sincronizar com Supabase
+        if (USE_SUPABASE && supabase) {
+            const roomId = getRoomId();
+            const taskIdToUpdate = task.supabaseId || task.id;
+            trackPendingTaskUpdate(task, {
+                completed: true,
+                completedBy: 'both'
+            });
+
+            supabase.updateTask(taskIdToUpdate, { completed: true, completed_by: 'both' })
+                .then(() => console.log('✅ Task de casal atualizada no Supabase'))
+                .catch(e => console.error('❌ ERRO ao atualizar task de casal:', e, {taskId: taskIdToUpdate}));
+
+            // Sincronizar ambos os players
+            supabase.updatePlayer(roomId, 1, {
+                coins: gameState.player1.coins,
+                level: gameState.player1.level,
+                streak: gameState.player1.streak,
+                tasks_completed: gameState.player1.tasksCompleted
+            }).then(() => console.log('✅ Player1 atualizado no Supabase'))
+              .catch(e => console.error('❌ ERRO ao atualizar player1:', e));
+
+            supabase.updatePlayer(roomId, 2, {
+                coins: gameState.player2.coins,
+                level: gameState.player2.level,
+                streak: gameState.player2.streak,
+                tasks_completed: gameState.player2.tasksCompleted
+            }).then(() => console.log('✅ Player2 atualizado no Supabase'))
+              .catch(e => console.error('❌ ERRO ao atualizar player2:', e));
+        }
+
+        renderAll();
+        showToast(`🎉 Tarefa de casal completada! +${task.coins}⭐ para cada!`);
+    } else {
+        // Tarefa pessoal - apenas o jogador que completou recebe
+        task.completed = true;
+        task.completedBy = playerId;
+
+        player.coins += task.coins;
+        player.tasksCompleted += 1;
+
+        updateLevel(playerId);
+        updateStreak(playerId);
+        checkAchievements(playerId);
+
+        addHistory(`${playerName} completou "${task.description}" +${task.coins}⭐`);
+        saveGame();
+
+        // Sincronizar com Supabase
+        if (USE_SUPABASE && supabase) {
+            const roomId = getRoomId();
+            const taskIdToUpdate = task.supabaseId || task.id;
+            trackPendingTaskUpdate(task, {
+                completed: true,
+                completedBy: playerId
+            });
+
+            supabase.updateTask(taskIdToUpdate, { completed: true, completed_by: playerId })
+                .then(() => console.log('✅ Task pessoal atualizada no Supabase'))
+                .catch(e => console.error('❌ ERRO ao atualizar task:', e, {taskId: taskIdToUpdate}));
+
+            // Sincronizar player que completa
+            supabase.updatePlayer(roomId, playerId === 'player1' ? 1 : 2, {
+                coins: player.coins,
+                level: player.level,
+                streak: player.streak,
+                tasks_completed: player.tasksCompleted
+            }).then(() => console.log('✅ Player atualizado no Supabase'))
+              .catch(e => console.error('❌ ERRO ao atualizar player:', e));
+        }
+
+        renderAll();
+        showToast(`🎉 ${playerName} ganhou ${task.coins} moedas!`);
     }
-    
-    updateLevel(playerId);
-    updateStreak(playerId);
-    checkAchievements(playerId);
-    
-    addHistory(`${playerName} completou "${task.description}" +${task.coins}⭐`);
-    saveGame();
-    
-    // Sincronizar com Supabase
-    if (USE_SUPABASE && supabase) {
-        const roomId = getRoomId();
-        
-        // Usar supabaseId se disponível, senão usar id local (para tarefas antigas)
-        const taskIdToUpdate = task.supabaseId || task.id;
-        trackPendingTaskUpdate(task, {
-            completed: true,
-            completedBy: playerId
-        });
-        
-        supabase.updateTask(taskIdToUpdate, { completed: true, completed_by: playerId })
-            .then(() => console.log('✅ Task atualizada no Supabase'))
-            .catch(e => console.error('❌ ERRO ao atualizar task:', e, {taskId: taskIdToUpdate, supabaseId: task.supabaseId}));
-        
-        // Sincronizar player que completa
-        supabase.updatePlayer(roomId, playerId === 'player1' ? 1 : 2, {
-            coins: player.coins,
-            level: player.level,
-            streak: player.streak,
-            tasks_completed: player.tasksCompleted
-        }).then(() => console.log('✅ Player atualizado no Supabase'))
-          .catch(e => console.error('❌ ERRO ao atualizar player:', e));
-    }
-    
-    renderAll();
-    showToast(`🎉 ${playerName} ganhou ${task.coins} moedas!`);
 }
 
 function deleteTask(taskId) {
@@ -442,39 +480,71 @@ function deleteTask(taskId) {
 
 function renderTaskCompletionButtons(task) {
     if (task.completed) {
+        if (task.completedBy === 'both') {
+            return `<span style="color: green; font-weight: bold;">Feito pelo casal 💑</span>`;
+        }
         const completedByName = task.completedBy ? getPlayerNameByKey(task.completedBy) : '';
         const label = completedByName ? ` por ${completedByName}` : '';
         return `<span style="color: green; font-weight: bold;">Feito${label}</span>`;
     }
-    
+
     const actionId = getTaskActionId(task);
-    const assignedPlayers = getTaskAssignedPlayers(task);
-    const canPlayer1Complete = assignedPlayers.includes('player1');
-    const canPlayer2Complete = assignedPlayers.includes('player2');
-    const buttons = [];
-    
-    if (canPlayer1Complete) {
-        buttons.push(`
-            <button class="btn-small btn-check" data-task-id="${actionId}" data-player-id="1">
-                ${getPlayerNameByKey('player1')}
+    const currentPlayer = getCurrentPlayer();
+
+    // Para tarefa pessoal, só mostra botão para o dono
+    if (task.type === 'pessoal') {
+        // Se não tem jogador autenticado, mostra para ambos
+        if (!currentPlayer) {
+            return `
+                <button class="btn-small btn-check" data-task-id="${actionId}" data-player-id="1">
+                    ${getPlayerNameByKey('player1')}
+                </button>
+                <button class="btn-small btn-check" data-task-id="${actionId}" data-player-id="2">
+                    ${getPlayerNameByKey('player2')}
+                </button>
+            `;
+        }
+
+        // Mostra botão apenas para o jogador autenticado
+        const playerKey = `player${currentPlayer.id}`;
+        return `
+            <button class="btn-small btn-check" data-task-id="${actionId}" data-player-id="${currentPlayer.id}">
+                ${getPlayerNameByKey(playerKey)}
             </button>
-        `);
+        `;
     }
-    
-    if (canPlayer2Complete) {
-        buttons.push(`
-            <button class="btn-small btn-check" data-task-id="${actionId}" data-player-id="2">
-                ${getPlayerNameByKey('player2')}
-            </button>
-        `);
-    }
-    
-    return buttons.join('');
+
+    // Para tarefa de casal, ambos podem completar
+    return `
+        <button class="btn-small btn-check" data-task-id="${actionId}" data-player-id="1">
+            ${getPlayerNameByKey('player1')}
+        </button>
+        <button class="btn-small btn-check" data-task-id="${actionId}" data-player-id="2">
+            ${getPlayerNameByKey('player2')}
+        </button>
+    `;
 }
 
 function renderTasks() {
     let tasks = gameState.tasks;
-    
+    const currentPlayer = getCurrentPlayer();
+
+    // Filtrar baseado no jogador autenticado
+    if (currentPlayer) {
+        const playerKey = `player${currentPlayer.id}`;
+        tasks = tasks.filter(t => {
+            // Tarefas pessoais: mostrar apenas as que pertencem ao jogador
+            if (t.type === 'pessoal') {
+                return t.completedBy === playerKey || !t.completed;
+            }
+            // Tarefas de casal: mostrar todas
+            if (t.type === 'casal') {
+                return true;
+            }
+            return true;
+        });
+    }
+
     if (gameState.filter === 'pessoal') {
         tasks = tasks.filter(t => t.type === 'pessoal');
     } else if (gameState.filter === 'casal') {
@@ -482,21 +552,21 @@ function renderTasks() {
     } else if (gameState.filter === 'concluido') {
         tasks = tasks.filter(t => t.completed);
     }
-    
+
     const tasksList = document.getElementById('tasks-list');
     if (!tasksList) return;
-    
+
     if (tasks.length === 0) {
         tasksList.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">Nenhuma tarefa encontrada</p>';
         return;
     }
-    
+
     tasksList.innerHTML = tasks.map(task => {
         const actionId = getTaskActionId(task);
         const type = task.type === 'casal' ? 'casal' : 'pessoal';
         const typeLabel = type === 'casal' ? 'Casal' : 'Pessoal';
         const coins = toSafeNumber(task.coins, 0);
-        
+
         return `
         <div class="task-card ${task.completed ? 'concluido' : ''}">
             <div class="task-header">
@@ -513,7 +583,7 @@ function renderTasks() {
         </div>
     `;
     }).join('');
-    
+
     // Adicionar event listeners DEPOIS de renderizar
     addTaskEventListeners();
 }
@@ -1288,7 +1358,6 @@ function syncRemoteData(data) {
             description: t.description,
             coins: t.coins,
             type: t.type,
-            assigned: t.assigned,
             completed: t.completed,
             completedBy: t.completed_by,
             createdAt: t.created_at

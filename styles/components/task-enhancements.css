@@ -1,0 +1,84 @@
+/**
+ * Estilos para Prioridade e Deadline das Tarefas
+ */
+
+/* Indicador de Prioridade */
+.task-priority {
+    font-size: 14px;
+    margin-left: auto;
+    cursor: help;
+}
+
+/* Deadline */
+.task-deadline {
+    font-size: 12px;
+    color: #667eea;
+    background: rgba(102, 126, 234, 0.1);
+    padding: 4px 8px;
+    border-radius: 4px;
+    margin: 8px 0;
+    display: inline-block;
+}
+
+.task-deadline.overdue {
+    color: #dc3545;
+    background: rgba(220, 53, 69, 0.1);
+    font-weight: bold;
+}
+
+.task-deadline.due-soon {
+    color: #f59e0b;
+    background: rgba(245, 158, 11, 0.1);
+    font-weight: bold;
+}
+
+/* Cores de borda por prioridade */
+.task-card[data-priority="alta"] {
+    border-left: 4px solid #dc3545;
+}
+
+.task-card[data-priority="media"] {
+    border-left: 4px solid #f59e0b;
+}
+
+.task-card[data-priority="baixa"] {
+    border-left: 4px solid #10b981;
+}
+
+.task-card[data-priority="alta"].concluido {
+    border-left-color: #10b981;
+}
+
+.task-card[data-priority="media"].concluido {
+    border-left-color: #10b981;
+}
+
+.task-card[data-priority="baixa"].concluido {
+    border-left-color: #10b981;
+}
+
+/* Animação para tarefas urgentes */
+@keyframes pulse {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 0 8px rgba(220, 53, 69, 0);
+    }
+}
+
+.task-card.urgent {
+    animation: pulse 2s infinite;
+}
+
+/* Responsividade para novos elementos */
+@media (max-width: 768px) {
+    .task-priority {
+        font-size: 12px;
+    }
+    
+    .task-deadline {
+        font-size: 11px;
+        padding: 3px 6px;
+    }
+}

@@ -25,6 +25,8 @@ CREATE TABLE IF NOT EXISTS tasks (
   description TEXT NOT NULL,
   coins INT NOT NULL DEFAULT 10,
   type TEXT NOT NULL DEFAULT 'pessoal' CHECK (type IN ('pessoal', 'casal')),
+  priority TEXT NOT NULL DEFAULT 'media' CHECK (priority IN ('alta', 'media', 'baixa')),
+  deadline DATE,
   created_by TEXT,
   completed BOOLEAN NOT NULL DEFAULT FALSE,
   completed_by TEXT CHECK (completed_by IN ('player1', 'player2', 'both')),

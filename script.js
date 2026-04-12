@@ -304,6 +304,8 @@ function createTask() {
         const description = document.getElementById('taskDescription').value.trim();
         const coins = Math.max(1, parseInt(document.getElementById('taskCoins').value) || 10);
         const type = document.getElementById('taskType').value;
+        const priority = document.getElementById('taskPriority').value;
+        const deadline = document.getElementById('taskDeadline').value || null;
 
         if (!description) {
             showToast('⚠️ Descreva a tarefa!');
@@ -318,6 +320,8 @@ function createTask() {
             description,
             coins,
             type,
+            priority: priority || 'media',
+            deadline: deadline || null,
             createdBy: currentPlayer ? `player${currentPlayer.id}` : null, // Quem criou a tarefa
             completed: false,
             completedBy: null,
@@ -348,6 +352,8 @@ function createTask() {
         closeModal('newTaskModal');
         document.getElementById('taskDescription').value = '';
         document.getElementById('taskCoins').value = '10';
+        document.getElementById('taskPriority').value = 'media';
+        document.getElementById('taskDeadline').value = '';
         showToast('✅ Tarefa criada!');
     } catch (error) {
         console.error('❌ Erro ao criar tarefa:', error);
@@ -595,13 +601,19 @@ function renderTasks() {
         const type = task.type === 'casal' ? 'casal' : 'pessoal';
         const typeLabel = type === 'casal' ? 'Casal' : 'Pessoal';
         const coins = toSafeNumber(task.coins, 0);
+        const priority = task.priority || 'media';
+        const deadline = task.deadline ? formatDeadline(task.deadline) : null;
+        const priorityEmoji = getPriorityEmoji(priority);
+        const deadlineClass = getDeadlineClass(task.deadline, task.completed);
 
         return `
-        <div class="task-card ${task.completed ? 'concluido' : ''}">
+        <div class="task-card ${task.completed ? 'concluido' : ''} ${deadlineClass}" data-priority="${priority}">
             <div class="task-header">
                 <span class="task-type ${type}">${typeLabel}</span>
+                <span class="task-priority" title="Prioridade: ${getPriorityLabel(priority)}">${priorityEmoji}</span>
             </div>
             <div class="task-description">${escapeHtml(task.description)}</div>
+            ${deadline ? `<div class="task-deadline ${deadlineClass}">📅 ${deadline}</div>` : ''}
             <div class="task-footer">
                 <span class="task-coins">${coins}⭐</span>
                 <div class="task-actions">
@@ -1151,7 +1163,7 @@ function formatDate(isoString) {
     const today = new Date();
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
-    
+
     if (date.toDateString() === today.toDateString()) {
         return `Hoje às ${date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
     } else if (date.toDateString() === yesterday.toDateString()) {
@@ -1159,6 +1171,43 @@ function formatDate(isoString) {
     } else {
         return date.toLocaleDateString('pt-BR', { year: 'numeric', month: 'short', day: 'numeric' });
     }
+}
+
+function getPriorityEmoji(priority) {
+    const emojis = { alta: '🔴', media: '🟡', baixa: '🟢' };
+    return emojis[priority] || '🟡';
+}
+
+function getPriorityLabel(priority) {
+    const labels = { alta: 'Alta', media: 'Média', baixa: 'Baixa' };
+    return labels[priority] || 'Média';
+}
+
+function formatDeadline(dateString) {
+    if (!dateString) return null;
+    try {
+        const date = new Date(dateString + 'T00:00:00');
+        return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+    } catch (error) {
+        return dateString;
+    }
+}
+
+function getDeadlineClass(deadline, completed) {
+    if (!deadline || completed) return '';
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const deadlineDate = new Date(deadline + 'T00:00:00');
+    const diffTime = deadlineDate - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 0) {
+        return 'overdue'; // Vencida
+    } else if (diffDays <= 2) {
+        return 'due-soon'; // Vence em breve
+    }
+    return '';
 }
 
 // Rendering
@@ -1399,6 +1448,8 @@ function syncRemoteData(data) {
             description: t.description,
             coins: t.coins,
             type: t.type,
+            priority: t.priority,
+            deadline: t.deadline,
             createdBy: t.created_by,
             completed: t.completed,
             completedBy: t.completed_by,

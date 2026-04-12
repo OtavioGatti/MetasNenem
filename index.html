@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MetasNenem - Desafios do Casal</title>
     <link rel="stylesheet" href="styles/style.css">
+    <link rel="stylesheet" href="styles/components/task-enhancements.css">
     <script src="src/core/config.js"></script>
     <script src="src/database/supabase.js"></script>
 </head>
@@ -188,6 +189,18 @@
                         <option value="pessoal">Pessoal</option>
                         <option value="casal">Casal</option>
                     </select>
+                </div>
+                <div class="form-group">
+                    <label>Prioridade:</label>
+                    <select id="taskPriority">
+                        <option value="baixa">🟢 Baixa</option>
+                        <option value="media" selected>🟡 Média</option>
+                        <option value="alta">🔴 Alta</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Data Limite (opcional):</label>
+                    <input type="date" id="taskDeadline">
                 </div>
                 <button class="btn-primary" onclick="createTask()">Criar Tarefa</button>
             </div>

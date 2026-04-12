@@ -363,10 +363,8 @@ function completeTask(taskId, playerId, playerName) {
     
     if (task.completed) return;
 
-    const player = gameState[playerId];
-
-    // Se for tarefa de casal, ambos completam e ambos recebem coins
-    if (task.type === 'casal') {
+    // Se for tarefa de casal (playerId === 'both')
+    if (task.type === 'casal' || playerId === 'both') {
         task.completed = true;
         task.completedBy = 'both';
 
@@ -426,6 +424,7 @@ function completeTask(taskId, playerId, playerName) {
         showToast(`🎉 Tarefa de casal completada! +${task.coins}⭐ para cada!`);
     } else {
         // Tarefa pessoal - apenas o jogador que completou recebe
+        const player = gameState[playerId];
         task.completed = true;
         task.completedBy = playerId;
 
@@ -496,38 +495,36 @@ function renderTaskCompletionButtons(task) {
     }
 
     const actionId = getTaskActionId(task);
-    const currentPlayer = getCurrentPlayer();
 
-    // Para tarefa pessoal, só mostra botão para o dono
-    if (task.type === 'pessoal') {
-        // Se não tem jogador autenticado, mostra para ambos
-        if (!currentPlayer) {
-            return `
-                <button class="btn-small btn-check" data-task-id="${actionId}" data-player-id="1">
-                    ${getPlayerNameByKey('player1')}
-                </button>
-                <button class="btn-small btn-check" data-task-id="${actionId}" data-player-id="2">
-                    ${getPlayerNameByKey('player2')}
-                </button>
-            `;
-        }
-
-        // Mostra botão apenas para o jogador autenticado
-        const playerKey = `player${currentPlayer.id}`;
+    // Para tarefa de casal, mostrar apenas um botão "Completar"
+    if (task.type === 'casal') {
         return `
-            <button class="btn-small btn-check" data-task-id="${actionId}" data-player-id="${currentPlayer.id}">
-                ${getPlayerNameByKey(playerKey)}
+            <button class="btn-small btn-check" data-task-id="${actionId}" data-player-id="both" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                Completar 💑
             </button>
         `;
     }
 
-    // Para tarefa de casal, ambos podem completar
+    // Para tarefa pessoal, mostrar botão para o jogador correspondente
+    const currentPlayer = getCurrentPlayer();
+    
+    // Se não tem jogador autenticado, mostra para ambos
+    if (!currentPlayer) {
+        return `
+            <button class="btn-small btn-check" data-task-id="${actionId}" data-player-id="1">
+                ${getPlayerNameByKey('player1')}
+            </button>
+            <button class="btn-small btn-check" data-task-id="${actionId}" data-player-id="2">
+                ${getPlayerNameByKey('player2')}
+            </button>
+        `;
+    }
+
+    // Mostra botão apenas para o jogador autenticado
+    const playerKey = `player${currentPlayer.id}`;
     return `
-        <button class="btn-small btn-check" data-task-id="${actionId}" data-player-id="1">
-            ${getPlayerNameByKey('player1')}
-        </button>
-        <button class="btn-small btn-check" data-task-id="${actionId}" data-player-id="2">
-            ${getPlayerNameByKey('player2')}
+        <button class="btn-small btn-check" data-task-id="${actionId}" data-player-id="${currentPlayer.id}">
+            ${getPlayerNameByKey(playerKey)}
         </button>
     `;
 }
@@ -610,28 +607,40 @@ function addTaskEventListeners() {
         const checkBtn = e.target.closest('button.btn-check[data-task-id][data-player-id]');
         if (checkBtn) {
             const taskId = normalizeEntityId(checkBtn.getAttribute('data-task-id'));
-            const playerId = parseInt(checkBtn.getAttribute('data-player-id'));
+            const playerIdAttr = checkBtn.getAttribute('data-player-id');
             
+            // Verificar se é 'both' ou um número
+            let playerId;
+            let playerKey;
+            let playerName;
+            
+            if (playerIdAttr === 'both') {
+                playerId = 'both';
+                playerKey = 'both';
+                playerName = `${gameState.player1.name} e ${gameState.player2.name}`;
+            } else {
+                playerId = parseInt(playerIdAttr);
+                playerKey = `player${playerId}`;
+                playerName = gameState[playerKey].name;
+            }
+
             // Evitar múltiplos cliques na mesma task
             if (processingTaskIds.has(taskId)) {
                 console.log('⚠️ Task já está sendo processada:', taskId);
                 return;
             }
-            
+
             processingTaskIds.add(taskId);
             checkBtn.disabled = true;
-            
-            const playerKey = `player${playerId}`;
-            const playerName = gameState[playerKey].name;
-            
+
             console.log('🖱️ Task completed:', { taskId, playerId, playerKey, playerName });
             completeTask(taskId, playerKey, playerName);
-            
+
             // Remover do processing após um tempo seguro
             setTimeout(() => processingTaskIds.delete(taskId), 500);
             return;
         }
-        
+
         const deleteBtn = e.target.closest('button.btn-delete[data-task-id]');
         if (deleteBtn) {
             const taskId = normalizeEntityId(deleteBtn.getAttribute('data-task-id'));

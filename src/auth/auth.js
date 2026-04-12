@@ -1,4 +1,5 @@
 // 🔐 Sistema de Autenticação e Players
+// Dependências: gameState, saveGame, USE_SUPABASE, supabase, getRoomId
 
 let currentPlayer = null; // { id: 1 ou 2, name: 'Você' ou 'Namorada' }
 

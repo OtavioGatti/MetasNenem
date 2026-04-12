@@ -382,8 +382,17 @@ let supabase = null;
 
 function initSupabase() {
     if (USE_SUPABASE && SUPABASE_URL && SUPABASE_KEY) {
-        supabase = new SupabaseManager(SUPABASE_URL, SUPABASE_KEY);
-        console.log('✅ Supabase conectado!');
+        const baseManager = new SupabaseManager(SUPABASE_URL, SUPABASE_KEY);
+        
+        // Envolver com retry automático
+        if (typeof createSupabaseWrapper === 'function') {
+            supabase = createSupabaseWrapper(baseManager);
+            console.log('✅ Supabase conectado com retry automático!');
+        } else {
+            supabase = baseManager;
+            console.log('✅ Supabase conectado!');
+        }
+        
         return true;
     }
     console.log('⚠️ Usando localStorage (Supabase não configurado)');

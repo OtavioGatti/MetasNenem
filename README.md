@@ -124,6 +124,31 @@ Acesse: `http://localhost:8000`
 - Use suas moedas para comprar recompensas
 - Exemplos: Pizza Night 🍕, Cinema 🎬, Flores 💐
 
+## 📱 PWA - App Instalável
+
+O MetasNenem é um **Progressive Web App (PWA)** - instale no celular e use como app nativo!
+
+### Como Instalar
+
+**Android:**
+1. Acesse no Chrome
+2. Toque em "Instalar MetasNenem"
+3. Ícone aparece na tela inicial
+
+**iPhone (Safari):**
+1. Toque em Compartilhar (⎋)
+2. "Adicionar à Tela de Início"
+3. Confirme e pronto!
+
+### Funcionalidades PWA
+- ✅ **Instalável** - Ícone na home screen
+- 🌐 **Offline** - Funciona sem internet
+- ⚡ **Rápido** - Carrega instantaneamente
+- 🎨 **Tela cheia** - Sem barra de navegador
+- 🔔 **Notificações** - Alertas em tempo real
+
+📖 **Guia completo**: [docs/GUIA_PWA.md](docs/GUIA_PWA.md)
+
 ##  Migração do Banco de Dados
 
 Se você já tem o Supabase configurado e precisa aplicar mudanças:

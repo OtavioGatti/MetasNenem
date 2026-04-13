@@ -2,8 +2,24 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="Desafios e metas para casais. Gamifiquem seus objetivos juntos!">
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="MetasNenem">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="MetasNenem">
+    
     <title>MetasNenem - Desafios do Casal</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- PWA Icons -->
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192x192.png">
+    <link rel="apple-touch-icon" href="assets/icons/icon-192x192.png">
+    
     <link rel="stylesheet" href="styles/style.css">
     <link rel="stylesheet" href="styles/components/task-enhancements.css">
     <link rel="stylesheet" href="styles/responsive.css">
@@ -302,9 +318,20 @@
     <script src="src/ui/partner-notifications.js"></script>
     <script src="src/ui/improvements.js"></script>
     <script src="src/utils/retry-manager.js"></script>
+    <script src="src/pwa/pwa-register.js"></script>
     <script src="script.js"></script>
     <script src="src/utils/debug.js"></script>
     <script src="src/utils/diagnostico.js"></script>
     <script src="src/utils/test-sync.js"></script>
+    
+    <!-- PWA Registration -->
+    <script>
+        // Registrar service worker e PWA
+        if (typeof registerServiceWorker === 'function') {
+            registerServiceWorker();
+            setupPWAInstall();
+            monitorConnection();
+        }
+    </script>
 </body>
 </html>

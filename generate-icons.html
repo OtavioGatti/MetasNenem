@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Gerador de Ícones PWA - MetasNenem</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: #f0f0f0; }
+        .icon-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; max-width: 1200px; margin: 0 auto; }
+        .icon-item { background: white; padding: 15px; border-radius: 8px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        canvas { border-radius: 12px; margin-bottom: 10px; }
+        .btn-download { background: #667eea; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; margin: 5px; }
+        .btn-download:hover { background: #5a67d8; }
+        h1 { text-align: center; color: #667eea; }
+        .info { text-align: center; color: #666; margin: 20px; }
+    </style>
+</head>
+<body>
+    <h1>💕 MetasNenem - Gerador de Ícones PWA</h1>
+    <p class="info">Clique com botão direito em cada ícone e salve como PNG na pasta assets/icons/</p>
+    
+    <div class="icon-grid" id="iconGrid"></div>
+    
+    <script>
+        const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+        const grid = document.getElementById('iconGrid');
+        
+        sizes.forEach(size => {
+            const item = document.createElement('div');
+            item.className = 'icon-item';
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            canvas.style.width = Math.min(size, 150) + 'px';
+            canvas.style.height = Math.min(size, 150) + 'px';
+            
+            const ctx = canvas.getContext('2d');
+            
+            // Gradiente de fundo
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#667eea');
+            gradient.addColorStop(1, '#764ba2');
+            
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.roundRect(0, 0, size, size, size * 0.2);
+            ctx.fill();
+            
+            // Coração/emoji
+            const fontSize = size * 0.5;
+            ctx.font = `${fontSize}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('💕', size / 2, size / 2 - size * 0.05);
+            
+            // Texto MN
+            const textFontSize = size * 0.18;
+            ctx.font = `bold ${textFontSize}px Arial`;
+            ctx.fillStyle = 'white';
+            ctx.fillText('MN', size / 2, size / 2 + size * 0.25);
+            
+            const label = document.createElement('div');
+            label.textContent = `${size}x${size}`;
+            label.style.fontSize = '12px';
+            label.style.color = '#666';
+            label.style.marginTop = '8px';
+            
+            const downloadBtn = document.createElement('button');
+            downloadBtn.className = 'btn-download';
+            downloadBtn.textContent = '⬇️ Download';
+            downloadBtn.onclick = () => {
+                canvas.toBlob(blob => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `icon-${size}x${size}.png`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                });
+            };
+            
+            item.appendChild(canvas);
+            item.appendChild(label);
+            item.appendChild(downloadBtn);
+            grid.appendChild(item);
+        });
+        
+        // Gerar ícones de atalho
+        const shortcuts = [
+            { emoji: '✅', label: 'shortcut-task.png', name: 'Nova Tarefa' },
+            { emoji: '🎯', label: 'shortcut-challenge.png', name: 'Novo Desafio' }
+        ];
+        
+        shortcuts.forEach(shortcut => {
+            const item = document.createElement('div');
+            item.className = 'icon-item';
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = 96;
+            canvas.height = 96;
+            canvas.style.width = '96px';
+            canvas.style.height = '96px';
+            
+            const ctx = canvas.getContext('2d');
+            
+            // Fundo branco com borda
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.roundRect(0, 0, 96, 96, 20);
+            ctx.fill();
+            ctx.strokeStyle = '#667eea';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            
+            // Emoji
+            ctx.font = '48px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(shortcut.emoji, 48, 48);
+            
+            const label = document.createElement('div');
+            label.textContent = shortcut.name;
+            label.style.fontSize = '12px';
+            label.style.color = '#666';
+            label.style.marginTop = '8px';
+            
+            const downloadBtn = document.createElement('button');
+            downloadBtn.className = 'btn-download';
+            downloadBtn.textContent = '⬇️ Download';
+            downloadBtn.onclick = () => {
+                canvas.toBlob(blob => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = shortcut.label;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                });
+            };
+            
+            item.appendChild(canvas);
+            item.appendChild(label);
+            item.appendChild(downloadBtn);
+            grid.appendChild(item);
+        });
+    </script>
+</body>
+</html>

@@ -333,6 +333,7 @@ function createTask() {
             priority: priority || 'media',
             deadline: deadline || null,
             recurrence: document.getElementById('taskRecurrence')?.value || 'none',
+            tags: (document.getElementById('taskTags')?.value || '').split(',').map(t => t.trim()).filter(t => t),
             lastCompleted: null,
             nextDue: deadline || null,
             createdBy: currentPlayer ? `player${currentPlayer.id}` : null, // Quem criou a tarefa
@@ -368,6 +369,7 @@ function createTask() {
         document.getElementById('taskPriority').value = 'media';
         document.getElementById('taskDeadline').value = '';
         document.getElementById('taskRecurrence').value = 'none';
+        document.getElementById('taskTags').value = '';
         showToast('✅ Tarefa criada!');
     } catch (error) {
         console.error('❌ Erro ao criar tarefa:', error);
@@ -599,6 +601,16 @@ function renderTasks() {
         tasks = tasks.filter(t => t.completed);
     }
 
+    // Aplicar filtro de tag se houver
+    if (gameState.selectedTag && gameState.selectedTag !== 'all') {
+        if (typeof filterTasksByTag === 'function') {
+            tasks = filterTasksByTag(tasks, gameState.selectedTag);
+        }
+    }
+
+    // Renderizar filtro de tags
+    renderTagsFilter(tasks);
+
     const tasksList = document.getElementById('tasks-list');
     if (!tasksList) return;
 
@@ -629,6 +641,7 @@ function renderTasks() {
                 ${recurrenceLabel ? `<span class="recurrence-badge ${task.recurrence}">${recurrenceLabel}</span>` : ''}
             </div>
             <div class="task-description">${escapeHtml(task.description)}</div>
+            ${task.tags && task.tags.length > 0 ? `<div class="task-tags">${task.tags.map(tag => `<span class="task-tag">${escapeHtml(tag)}</span>`).join('')}</div>` : ''}
             ${deadline ? `<div class="task-deadline ${deadlineClass}">📅 ${deadline}</div>` : ''}
             <div class="task-footer">
                 <span class="task-coins">${coins}⭐</span>
@@ -644,6 +657,70 @@ function renderTasks() {
     // Adicionar event listeners DEPOIS de renderizar
     addTaskEventListeners();
 }
+
+/**
+ * Renderiza filtro de tags
+ */
+function renderTagsFilter(tasks) {
+    const container = document.getElementById('tagsFilter');
+    if (!container) return;
+
+    // Coletar todas as tags únicas
+    const tagsMap = new Map();
+    tasks.forEach(task => {
+        if (task.tags && Array.isArray(task.tags)) {
+            task.tags.forEach(tag => {
+                const lowerTag = tag.toLowerCase();
+                tagsMap.set(lowerTag, (tagsMap.get(lowerTag) || 0) + 1);
+            });
+        }
+    });
+
+    // Se não há tags, esconder o filtro
+    if (tagsMap.size === 0) {
+        container.style.display = 'none';
+        return;
+    }
+
+    container.style.display = 'flex';
+    
+    const sortedTags = Array.from(tagsMap.entries()).sort((a, b) => b[1] - a[1]);
+    const selectedTag = gameState.selectedTag || 'all';
+
+    let html = '<div class="tags-filter-title">🏷️ Filtrar por tag:</div>';
+    
+    // Botão "Todas"
+    html += `
+        <button class="tag-filter-btn ${selectedTag === 'all' ? 'active' : ''}" onclick="selectTag('all')">
+            Todas
+        </button>
+    `;
+
+    // Botões de tags
+    sortedTags.forEach(([tag, count]) => {
+        const isActive = selectedTag === tag;
+        html += `
+            <button class="tag-filter-btn ${isActive ? 'active' : ''}" onclick="selectTag('${tag}')">
+                ${escapeHtml(tag)}
+                <span class="tag-count">${count}</span>
+            </button>
+        `;
+    });
+
+    container.innerHTML = html;
+}
+
+/**
+ * Seleciona uma tag para filtrar
+ */
+function selectTag(tag) {
+    gameState.selectedTag = tag === 'all' ? null : tag;
+    saveGame();
+    renderTasks();
+}
+
+// Expor para escopo global
+window.selectTag = selectTag;
 
 // Adicionar event listeners aos botões das tarefas
 let taskListenerAttached = false;

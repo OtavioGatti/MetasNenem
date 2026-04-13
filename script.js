@@ -243,6 +243,11 @@ function switchTab(tab) {
     document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
     document.getElementById(tab).classList.add('active');
     event.target.classList.add('active');
+    
+    // Renderizar stats quando a tab for ativada
+    if (tab === 'stats' && typeof renderStatsDashboard === 'function') {
+        setTimeout(() => renderStatsDashboard(), 100);
+    }
 }
 
 function filterTasks(filter) {

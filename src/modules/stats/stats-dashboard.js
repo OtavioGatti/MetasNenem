@@ -6,7 +6,7 @@
 /**
  * Calcula estatísticas do jogo
  */
-export function calculateStats() {
+function calculateStats() {
     const gameState = window.gameState || {};
     
     // Total de moedas ganhas por jogador
@@ -73,7 +73,7 @@ export function calculateStats() {
 /**
  * Renderiza o dashboard de estatísticas
  */
-export function renderStatsDashboard() {
+function renderStatsDashboard() {
     const stats = calculateStats();
     const container = document.getElementById('statsDashboard');
     
@@ -82,8 +82,11 @@ export function renderStatsDashboard() {
         return;
     }
     
-    const p1Name = window.gameState?.player1?.name || 'Jogador 1';
-    const p2Name = window.gameState?.player2?.name || 'Jogador 2';
+    const gameState = window.gameState || {};
+    const p1Name = gameState.player1?.name || 'Jogador 1';
+    const p2Name = gameState.player2?.name || 'Jogador 2';
+    
+    console.log('📊 Renderizando dashboard:', stats);
     
     container.innerHTML = `
         <div class="stats-section">

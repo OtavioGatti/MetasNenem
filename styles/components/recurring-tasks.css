@@ -1,0 +1,38 @@
+/**
+ * Estilos para Tarefas Recorrentes
+ */
+
+.recurrence-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 12px;
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+    font-weight: 500;
+    margin-left: 8px;
+}
+
+.recurrence-badge.daily {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+}
+
+.recurrence-badge.weekly {
+    background: rgba(245, 158, 11, 0.1);
+    color: #f59e0b;
+}
+
+.recurrence-badge.monthly {
+    background: rgba(139, 92, 246, 0.1);
+    color: #8b5cf6;
+}
+
+@media (max-width: 768px) {
+    .recurrence-badge {
+        font-size: 10px;
+        padding: 2px 6px;
+    }
+}

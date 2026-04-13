@@ -155,6 +155,11 @@ async function init() {
     validateConfig();
     loadGame();
 
+    // Verificar tarefas recorrentes
+    if (typeof checkAndRecreateRecurringTasks === 'function') {
+        checkAndRecreateRecurringTasks();
+    }
+
     // Autenticar jogador antes de renderizar
     await initializeAuth();
 
@@ -162,7 +167,7 @@ async function init() {
     renderAll();
     checkDailyStreak();
     startSync();
-    
+
     // Inicializar busca de tarefas
     if (typeof setupTaskSearch === 'function') {
         setupTaskSearch();
@@ -327,6 +332,9 @@ function createTask() {
             type,
             priority: priority || 'media',
             deadline: deadline || null,
+            recurrence: document.getElementById('taskRecurrence')?.value || 'none',
+            lastCompleted: null,
+            nextDue: deadline || null,
             createdBy: currentPlayer ? `player${currentPlayer.id}` : null, // Quem criou a tarefa
             completed: false,
             completedBy: null,
@@ -359,6 +367,7 @@ function createTask() {
         document.getElementById('taskCoins').value = '10';
         document.getElementById('taskPriority').value = 'media';
         document.getElementById('taskDeadline').value = '';
+        document.getElementById('taskRecurrence').value = 'none';
         showToast('✅ Tarefa criada!');
     } catch (error) {
         console.error('❌ Erro ao criar tarefa:', error);
@@ -610,12 +619,14 @@ function renderTasks() {
         const deadline = task.deadline ? formatDeadline(task.deadline) : null;
         const priorityEmoji = getPriorityEmoji(priority);
         const deadlineClass = getDeadlineClass(task.deadline, task.completed);
+        const recurrenceLabel = task.recurrence && task.recurrence !== 'none' ? getRecurrenceLabel(task.recurrence) : '';
 
         return `
         <div class="task-card ${task.completed ? 'concluido' : ''} ${deadlineClass}" data-priority="${priority}">
             <div class="task-header">
                 <span class="task-type ${type}">${typeLabel}</span>
                 <span class="task-priority" title="Prioridade: ${getPriorityLabel(priority)}">${priorityEmoji}</span>
+                ${recurrenceLabel ? `<span class="recurrence-badge ${task.recurrence}">${recurrenceLabel}</span>` : ''}
             </div>
             <div class="task-description">${escapeHtml(task.description)}</div>
             ${deadline ? `<div class="task-deadline ${deadlineClass}">📅 ${deadline}</div>` : ''}

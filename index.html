@@ -22,6 +22,7 @@
     
     <link rel="stylesheet" href="styles/style.css">
     <link rel="stylesheet" href="styles/components/task-enhancements.css">
+    <link rel="stylesheet" href="styles/components/recurring-tasks.css">
     <link rel="stylesheet" href="styles/responsive.css">
     <script src="src/core/config.js"></script>
     <script src="src/database/supabase.js"></script>
@@ -228,6 +229,15 @@
                     <label>Data Limite (opcional):</label>
                     <input type="date" id="taskDeadline">
                 </div>
+                <div class="form-group">
+                    <label>Repetição:</label>
+                    <select id="taskRecurrence">
+                        <option value="none">Não repetir</option>
+                        <option value="daily">📅 Diária</option>
+                        <option value="weekly">📅 Semanal</option>
+                        <option value="monthly">📅 Mensal</option>
+                    </select>
+                </div>
                 <button class="btn-primary" onclick="createTask()">Criar Tarefa</button>
             </div>
         </div>
@@ -328,6 +338,7 @@
     <script src="src/ui/improvements.js"></script>
     <script src="src/utils/retry-manager.js"></script>
     <script src="src/pwa/pwa-register.js"></script>
+    <script src="src/modules/tasks/recurring-manager.js"></script>
     <script src="src/modules/stats/stats-dashboard.js"></script>
     <script src="script.js"></script>
     <script src="src/utils/debug.js"></script>

@@ -1232,6 +1232,11 @@ function renderAll() {
     renderAchievements();
     updatePlayerCoinsDisplay();
     renderLoja();
+    
+    // Renderizar dashboard de estatísticas
+    if (typeof renderStatsDashboard === 'function') {
+        renderStatsDashboard();
+    }
 }
 
 // Close modal on outside click

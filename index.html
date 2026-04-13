@@ -106,6 +106,7 @@
         <nav class="nav-tabs">
             <button class="tab-btn active" onclick="switchTab('tarefas')">📋 Tarefas</button>
             <button class="tab-btn" onclick="switchTab('casal')">💑 Casal</button>
+            <button class="tab-btn" onclick="switchTab('stats')">📊 Stats</button>
             <button class="tab-btn" onclick="switchTab('loja')">🛍️ Loja</button>
             <button class="tab-btn" onclick="switchTab('historico')">📊 Histórico</button>
             <button class="tab-btn" onclick="switchTab('achievements')">🏆 Achievements</button>
@@ -134,6 +135,12 @@
                 <h2>Desafios do Casal</h2>
                 <div class="couple-challenges" id="couple-challenges"></div>
                 <button class="btn-novo" onclick="openNewChallengeModal()">+ Novo Desafio</button>
+            </section>
+
+            <!-- Stats Tab -->
+            <section id="stats" class="tab-content">
+                <h2>📊 Dashboard de Estatísticas</h2>
+                <div id="statsDashboard"></div>
             </section>
 
             <!-- Histórico Tab -->
@@ -319,6 +326,7 @@
     <script src="src/ui/improvements.js"></script>
     <script src="src/utils/retry-manager.js"></script>
     <script src="src/pwa/pwa-register.js"></script>
+    <script src="src/modules/stats/stats-dashboard.js"></script>
     <script src="script.js"></script>
     <script src="src/utils/debug.js"></script>
     <script src="src/utils/diagnostico.js"></script>

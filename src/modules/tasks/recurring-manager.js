@@ -71,7 +71,7 @@ function calculateNextDueDate(recurrence, fromDate) {
 /**
  * Obtém label de recorrência
  */
-export function getRecurrenceLabel(recurrence) {
+function getRecurrenceLabel(recurrence) {
     const labels = {
         none: '',
         daily: '📅 Diária',
@@ -84,7 +84,7 @@ export function getRecurrenceLabel(recurrence) {
 /**
  * Obtém emoji de recorrência
  */
-export function getRecurrenceEmoji(recurrence) {
+function getRecurrenceEmoji(recurrence) {
     const emojis = {
         none: '',
         daily: '🔁',

@@ -6,7 +6,7 @@
 /**
  * Verifica e recria tarefas recorrentes que foram completadas
  */
-export function checkAndRecreateRecurringTasks() {
+function checkAndRecreateRecurringTasks() {
     const gameState = window.gameState || {};
     const tasks = gameState.tasks || [];
     const now = new Date();

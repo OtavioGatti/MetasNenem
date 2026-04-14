@@ -6,7 +6,7 @@
 /**
  * Obtém todas as tags únicas do sistema
  */
-export function getAllTags() {
+function getAllTags() {
     const gameState = window.gameState || {};
     const tasks = gameState.tasks || [];
     const tags = new Set();
@@ -23,7 +23,7 @@ export function getAllTags() {
 /**
  * Filtra tarefas por tag
  */
-export function filterTasksByTag(tasks, selectedTag) {
+function filterTasksByTag(tasks, selectedTag) {
     if (!selectedTag || selectedTag === 'all') return tasks;
 
     return tasks.filter(task => {
@@ -35,7 +35,7 @@ export function filterTasksByTag(tasks, selectedTag) {
 /**
  * Renderiza badges de tags em um card de tarefa
  */
-export function renderTaskTags(task) {
+function renderTaskTags(task) {
     if (!task.tags || !Array.isArray(task.tags) || task.tags.length === 0) return '';
 
     return task.tags.map(tag => 

@@ -14,7 +14,7 @@ const MAX_DELAY = 10000; // 10 segundos
  * @param {number} maxRetries - Número máximo de tentativas
  * @returns {Promise<any>} Resultado da operação
  */
-export async function withRetry(fn, context = 'Operação', maxRetries = MAX_RETRIES) {
+async function withRetry(fn, context = 'Operação', maxRetries = MAX_RETRIES) {
     let lastError = null;
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -70,7 +70,7 @@ function sleep(ms) {
 /**
  * Wrapper para operações do Supabase com retry
  */
-export function createSupabaseWrapper(supabaseInstance) {
+function createSupabaseWrapper(supabaseInstance) {
     if (!supabaseInstance) {
         return null;
     }

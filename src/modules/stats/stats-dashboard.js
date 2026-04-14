@@ -221,8 +221,8 @@ function calculatePieAngle(value, total) {
 }
 
 // CSS para o dashboard
-const style = document.createElement('style');
-style.textContent = `
+const statsDashboardStyle = document.createElement('style');
+statsDashboardStyle.textContent = `
     .stats-section {
         margin-bottom: 25px;
     }
@@ -448,7 +448,7 @@ style.textContent = `
         }
     }
 `;
-document.head.appendChild(style);
+document.head.appendChild(statsDashboardStyle);
 
 // Exportar para escopo global
 window.calculateStats = calculateStats;

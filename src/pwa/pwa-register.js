@@ -9,7 +9,7 @@ let isAppInstalled = false;
 /**
  * Registra o service worker
  */
-export async function registerServiceWorker() {
+async function registerServiceWorker() {
     if (!('serviceWorker' in navigator)) {
         console.log('[PWA] Service Workers não suportados');
         return false;

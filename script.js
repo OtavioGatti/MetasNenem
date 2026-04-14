@@ -154,6 +154,7 @@ function resolvePendingTaskUpdate(task) {
 
 // Initialize
 async function init() {
+    console.log('🚀 Iniciando MetasNenem...');
     initSupabase();
     validateConfig();
     loadGame();
@@ -174,6 +175,16 @@ async function init() {
     // Inicializar busca de tarefas
     if (typeof setupTaskSearch === 'function') {
         setupTaskSearch();
+    }
+
+    // Debug: Verificar se stats está disponível
+    console.log('📊 renderStatsDashboard disponível:', typeof renderStatsDashboard);
+    console.log('📊 gameState:', gameState);
+    
+    // Forçar renderização inicial do stats
+    if (typeof renderStatsDashboard === 'function') {
+        console.log('📊 Renderizando stats inicial...');
+        renderStatsDashboard();
     }
 }
 
@@ -251,10 +262,18 @@ function switchTab(tab) {
     document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
     document.getElementById(tab).classList.add('active');
     event.target.classList.add('active');
-    
+
     // Renderizar stats quando a tab for ativada
-    if (tab === 'stats' && typeof renderStatsDashboard === 'function') {
-        setTimeout(() => renderStatsDashboard(), 100);
+    if (tab === 'stats') {
+        console.log('📊 Aba Stats ativada, renderizando dashboard...');
+        setTimeout(() => {
+            if (typeof renderStatsDashboard === 'function') {
+                console.log('📊 Chamando renderStatsDashboard...');
+                renderStatsDashboard();
+            } else {
+                console.error('❌ renderStatsDashboard não está definido');
+            }
+        }, 100);
     }
 }
 
@@ -964,20 +983,22 @@ function updateLevel(playerId) {
     }
 }
 
-// Streak System
+// Streak System - Limitado a 1 incremento por dia por jogador
 function checkDailyStreak() {
     const today = new Date().toDateString();
-    
+
     [gameState.player1, gameState.player2].forEach(player => {
-        if (player.lastActivityDate !== today) {
-            if (player.lastActivityDate) {
-                const lastDate = new Date(player.lastActivityDate);
-                const currentDate = new Date();
-                const daysDiff = Math.floor((currentDate - lastDate) / (1000 * 60 * 60 * 24));
-                
-                if (daysDiff > 1) {
-                    player.streak = 0;
-                }
+        if (player.lastActivityDate && player.lastActivityDate !== today) {
+            const lastDate = new Date(player.lastActivityDate);
+            const currentDate = new Date();
+            // Resetar timezone para comparar apenas datas
+            lastDate.setHours(0, 0, 0, 0);
+            currentDate.setHours(0, 0, 0, 0);
+            const daysDiff = Math.floor((currentDate - lastDate) / (1000 * 60 * 60 * 24));
+
+            if (daysDiff > 1) {
+                player.streak = 0;
+                console.log(`🔥 Streak resetado para ${player.name} (sem atividade por ${daysDiff} dias)`);
             }
         }
     });
@@ -986,10 +1007,14 @@ function checkDailyStreak() {
 function updateStreak(playerId) {
     const player = gameState[playerId];
     const today = new Date().toDateString();
-    
+
+    // Só incrementa se não tiver atividade hoje
     if (player.lastActivityDate !== today) {
         player.streak += 1;
         player.lastActivityDate = today;
+        console.log(`🔥 Streak de ${player.name} atualizado para ${player.streak} dias`);
+    } else {
+        console.log(`🔥 Streak de ${player.name} já foi atualizado hoje (${player.streak} dias)`);
     }
 }
 

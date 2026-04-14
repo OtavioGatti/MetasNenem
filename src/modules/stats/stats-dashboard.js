@@ -453,3 +453,6 @@ document.head.appendChild(style);
 // Exportar para escopo global
 window.calculateStats = calculateStats;
 window.renderStatsDashboard = renderStatsDashboard;
+
+console.log('✅ stats-dashboard.js carregado com sucesso');
+console.log('📊 window.renderStatsDashboard:', typeof window.renderStatsDashboard);

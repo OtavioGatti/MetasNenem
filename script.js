@@ -47,6 +47,9 @@ const ACHIEVEMENTS_DB = {
     'team_player': { icon: '🤝', name: 'Team Player', description: 'Complete 10 tarefas compartilhadas' }
 };
 
+// Tornar ACHIEVEMENTS_DB disponível globalmente para outros módulos
+window.ACHIEVEMENTS_DB = ACHIEVEMENTS_DB;
+
 // Helpers de ID e listeners são declarados mais abaixo, perto do uso.
 
 function normalizeEntityId(id) {

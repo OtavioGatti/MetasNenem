@@ -74,122 +74,134 @@ function calculateStats() {
  * Renderiza o dashboard de estatísticas
  */
 function renderStatsDashboard() {
-    const stats = calculateStats();
     const container = document.getElementById('statsDashboard');
     
     if (!container) {
         console.warn('Elemento statsDashboard não encontrado');
         return;
     }
-    
-    const gameState = window.gameState || {};
-    const p1Name = gameState.player1?.name || 'Jogador 1';
-    const p2Name = gameState.player2?.name || 'Jogador 2';
-    
-    console.log('📊 Renderizando dashboard:', stats);
-    
-    container.innerHTML = `
-        <div class="stats-section">
-            <h3 class="stats-section-title">💰 Economia Total</h3>
-            <div class="stat-card large">
-                <div class="stat-value">${stats.totals.economy}</div>
-                <div class="stat-label">moedas na economia</div>
-            </div>
-        </div>
+
+    try {
+        const stats = calculateStats();
+        const gameState = window.gameState || {};
+        const p1Name = gameState.player1?.name || 'Jogador 1';
+        const p2Name = gameState.player2?.name || 'Jogador 2';
         
-        <div class="stats-section">
-            <h3 class="stats-section-title">📊 Comparação de Jogadores</h3>
-            <div class="comparison-chart">
-                <div class="comparison-item">
-                    <div class="player-label">${p1Name}</div>
-                    <div class="bar-container">
-                        <div class="bar bar-player1" style="width: ${calculatePercentage(stats.player1.tasks, stats.totals.tasks)}%"></div>
-                    </div>
-                    <div class="bar-value">${stats.player1.tasks} tarefas</div>
-                </div>
-                
-                <div class="comparison-item">
-                    <div class="player-label">${p2Name}</div>
-                    <div class="bar-container">
-                        <div class="bar bar-player2" style="width: ${calculatePercentage(stats.player2.tasks, stats.totals.tasks)}%"></div>
-                    </div>
-                    <div class="bar-value">${stats.player2.tasks} tarefas</div>
+        console.log('📊 Renderizando dashboard:', stats);
+        
+        container.innerHTML = `
+            <div class="stats-section">
+                <h3 class="stats-section-title">💰 Economia Total</h3>
+                <div class="stat-card large">
+                    <div class="stat-value">${stats.totals.economy}</div>
+                    <div class="stat-label">moedas na economia</div>
                 </div>
             </div>
-        </div>
-        
-        <div class="stats-section">
-            <h3 class="stats-section-title">📈 Tipos de Tarefas</h3>
-            <div class="pie-chart-container">
-                <div class="pie-chart" style="background: conic-gradient(
-                    #667eea 0deg ${calculatePieAngle(stats.totals.personalTasks, stats.totals.tasks)}, 
-                    #f5576c ${calculatePieAngle(stats.totals.personalTasks, stats.totals.tasks)}deg 360deg
-                );">
-                </div>
-                <div class="pie-legend">
-                    <div class="legend-item">
-                        <span class="legend-color" style="background: #667eea;"></span>
-                        <span>Pessoais: ${stats.totals.personalTasks}</span>
+            
+            <div class="stats-section">
+                <h3 class="stats-section-title">📊 Comparação de Jogadores</h3>
+                <div class="comparison-chart">
+                    <div class="comparison-item">
+                        <div class="player-label">${p1Name}</div>
+                        <div class="bar-container">
+                            <div class="bar bar-player1" style="width: ${calculatePercentage(stats.player1.tasks, stats.totals.tasks)}%"></div>
+                        </div>
+                        <div class="bar-value">${stats.player1.tasks} tarefas</div>
                     </div>
-                    <div class="legend-item">
-                        <span class="legend-color" style="background: #f5576c;"></span>
-                        <span>Casal: ${stats.totals.coupleTasks}</span>
+                    
+                    <div class="comparison-item">
+                        <div class="player-label">${p2Name}</div>
+                        <div class="bar-container">
+                            <div class="bar bar-player2" style="width: ${calculatePercentage(stats.player2.tasks, stats.totals.tasks)}%"></div>
+                        </div>
+                        <div class="bar-value">${stats.player2.tasks} tarefas</div>
                     </div>
                 </div>
             </div>
-        </div>
-        
-        <div class="stats-section">
-            <h3 class="stats-section-title">🔥 Streaks Atuais</h3>
-            <div class="streak-comparison">
-                <div class="streak-card">
-                    <div class="streak-icon">🔥</div>
-                    <div class="streak-value">${stats.player1.streak}</div>
-                    <div class="streak-label">${p1Name}</div>
-                </div>
-                <div class="streak-vs">VS</div>
-                <div class="streak-card">
-                    <div class="streak-icon">🔥</div>
-                    <div class="streak-value">${stats.player2.streak}</div>
-                    <div class="streak-label">${p2Name}</div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="stats-section">
-            <h3 class="stats-section-title">🏆 Progresso de Achievements</h3>
-            <div class="progress-container">
-                <div class="progress-bar-stats">
-                    <div class="progress-fill-stats" style="width: ${stats.achievements.percentage}%"></div>
-                </div>
-                <div class="progress-stats-text">
-                    ${stats.achievements.unlocked}/${stats.achievements.total} desbloqueados (${stats.achievements.percentage}%)
+            
+            <div class="stats-section">
+                <h3 class="stats-section-title">📈 Tipos de Tarefas</h3>
+                <div class="pie-chart-container">
+                    <div class="pie-chart" style="background: conic-gradient(
+                        #667eea 0deg ${calculatePieAngle(stats.totals.personalTasks, stats.totals.tasks)}, 
+                        #f5576c ${calculatePieAngle(stats.totals.personalTasks, stats.totals.tasks)}deg 360deg
+                    );">
+                    </div>
+                    <div class="pie-legend">
+                        <div class="legend-item">
+                            <span class="legend-color" style="background: #667eea;"></span>
+                            <span>Pessoais: ${stats.totals.personalTasks}</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color" style="background: #f5576c;"></span>
+                            <span>Casal: ${stats.totals.coupleTasks}</span>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-        
-        <div class="stats-section">
-            <h3 class="stats-section-title">📋 Resumo Geral</h3>
-            <div class="stats-grid">
-                <div class="mini-stat">
-                    <div class="mini-stat-value">${stats.totals.tasks}</div>
-                    <div class="mini-stat-label">Tarefas Total</div>
-                </div>
-                <div class="mini-stat">
-                    <div class="mini-stat-value">${stats.totals.challenges}</div>
-                    <div class="mini-stat-label">Desafios</div>
-                </div>
-                <div class="mini-stat">
-                    <div class="mini-stat-value">${stats.totals.maxStreak}</div>
-                    <div class="mini-stat-label">Melhor Streak</div>
-                </div>
-                <div class="mini-stat">
-                    <div class="mini-stat-value">${Math.max(stats.player1.level, stats.player2.level)}</div>
-                    <div class="mini-stat-label">Nível Máximo</div>
+            
+            <div class="stats-section">
+                <h3 class="stats-section-title">🔥 Streaks Atuais</h3>
+                <div class="streak-comparison">
+                    <div class="streak-card">
+                        <div class="streak-icon">🔥</div>
+                        <div class="streak-value">${stats.player1.streak}</div>
+                        <div class="streak-label">${p1Name}</div>
+                    </div>
+                    <div class="streak-vs">VS</div>
+                    <div class="streak-card">
+                        <div class="streak-icon">🔥</div>
+                        <div class="streak-value">${stats.player2.streak}</div>
+                        <div class="streak-label">${p2Name}</div>
+                    </div>
                 </div>
             </div>
-        </div>
-    `;
+            
+            <div class="stats-section">
+                <h3 class="stats-section-title">🏆 Progresso de Achievements</h3>
+                <div class="progress-container">
+                    <div class="progress-bar-stats">
+                        <div class="progress-fill-stats" style="width: ${stats.achievements.percentage}%"></div>
+                    </div>
+                    <div class="progress-stats-text">
+                        ${stats.achievements.unlocked}/${stats.achievements.total} desbloqueados (${stats.achievements.percentage}%)
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stats-section">
+                <h3 class="stats-section-title">📋 Resumo Geral</h3>
+                <div class="stats-grid">
+                    <div class="mini-stat">
+                        <div class="mini-stat-value">${stats.totals.tasks}</div>
+                        <div class="mini-stat-label">Tarefas Total</div>
+                    </div>
+                    <div class="mini-stat">
+                        <div class="mini-stat-value">${stats.totals.challenges}</div>
+                        <div class="mini-stat-label">Desafios</div>
+                    </div>
+                    <div class="mini-stat">
+                        <div class="mini-stat-value">${stats.totals.maxStreak}</div>
+                        <div class="mini-stat-label">Melhor Streak</div>
+                    </div>
+                    <div class="mini-stat">
+                        <div class="mini-stat-value">${Math.max(stats.player1.level, stats.player2.level)}</div>
+                        <div class="mini-stat-label">Nível Máximo</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    } catch (error) {
+        console.error('❌ Erro ao renderizar dashboard:', error);
+        container.innerHTML = `
+            <div style="text-align: center; padding: 40px; color: #dc3545;">
+                <p style="font-size: 24px; margin-bottom: 10px;">⚠️</p>
+                <p>Erro ao carregar estatísticas</p>
+                <p style="font-size: 12px; color: #999; margin-top: 10px;">${error.message}</p>
+                <button onclick="renderStatsDashboard()" style="margin-top: 15px; padding: 8px 16px; border: none; border-radius: 6px; background: #667eea; color: white; cursor: pointer;">🔄 Tentar novamente</button>
+            </div>
+        `;
+    }
 }
 
 /**

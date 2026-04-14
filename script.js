@@ -35,6 +35,9 @@ let gameState = {
     filter: 'all'
 };
 
+// Tornar gameState disponível globalmente para outros módulos
+window.gameState = gameState;
+
 // Achievements Database
 const ACHIEVEMENTS_DB = {
     'first_task': { icon: '🎯', name: 'Primeira Tarefa', description: 'Complete sua primeira tarefa' },
@@ -195,11 +198,13 @@ function loadGame() {
         gameState = JSON.parse(saved);
     }
     normalizeGameStateShape();
+    window.gameState = gameState; // Sincronizar com window
     updatePlayerInitials();
 }
 
 function saveGame() {
     normalizeGameStateShape();
+    window.gameState = gameState; // Sincronizar com window
     localStorage.setItem('metasNenemGame', JSON.stringify(gameState));
 }
 

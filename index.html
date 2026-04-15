@@ -303,42 +303,6 @@
         </div>
     </div>
 
-    <!-- Setup Players Modal (First Time in Room) -->
-    <div id="setupPlayersModal" class="modal">
-        <div class="modal-content">
-            <h2>👥 Bem-vindo à MetasNenem!</h2>
-            <p style="color: #666; margin-bottom: 20px;">Digite os nomes de vocês para criar a sala</p>
-            <div class="form-group">
-                <label>Seu Nome:</label>
-                <input type="text" id="player1NameInput" placeholder="Ex: Otávio">
-            </div>
-            <div class="form-group">
-                <label>Nome da Sua Parceira:</label>
-                <input type="text" id="player2NameInput" placeholder="Ex: Camilla">
-            </div>
-            <button class="btn-primary" onclick="document.getElementById('confirmPlayersBtn').click()" style="width: 100%;">✅ Confirmar Nomes</button>
-            <button id="confirmPlayersBtn" style="display: none;"></button>
-        </div>
-    </div>
-
-    <!-- Select Player Modal (Existing Room) -->
-    <div id="selectPlayerModal" class="modal">
-        <div class="modal-content">
-            <h2>👤 Quem você é?</h2>
-            <p style="color: #666; margin-bottom: 20px;">Confirme qual é você para sincronizar corretamente</p>
-            <div style="display: grid; gap: 10px;">
-                <button id="player1Option" class="btn-primary" onclick="document.getElementById('selectPlayer1Btn').click()" style="padding: 15px; font-size: 1em;">
-                    👤 Player 1
-                </button>
-                <button id="selectPlayer2Option" class="btn-primary" onclick="document.getElementById('selectPlayer2Btn').click()" style="padding: 15px; font-size: 1em; background: var(--secondary);">
-                    👤 Player 2
-                </button>
-            </div>
-            <button id="selectPlayer1Btn" style="display: none;"></button>
-            <button id="selectPlayer2Btn" style="display: none;"></button>
-        </div>
-    </div>
-
     <script src="src/auth/auth.js"></script>
     <script src="src/ui/partner-notifications.js"></script>
     <script src="src/ui/improvements.js"></script>
@@ -351,10 +315,9 @@
     <script src="src/utils/debug.js"></script>
     <script src="src/utils/diagnostico.js"></script>
     <script src="src/utils/test-sync.js"></script>
-    
+
     <!-- PWA Registration -->
     <script>
-        // Registrar service worker e PWA
         if (typeof registerServiceWorker === 'function') {
             registerServiceWorker();
             setupPWAInstall();

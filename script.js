@@ -1,7 +1,7 @@
 // Game State
 let gameState = {
     player1: {
-        name: 'Você',
+        name: 'Otávio',
         coins: 0,
         level: 1,
         streak: 0,
@@ -10,7 +10,7 @@ let gameState = {
         achievements: []
     },
     player2: {
-        name: 'Namorada',
+        name: 'Camilla',
         coins: 0,
         level: 1,
         streak: 0,

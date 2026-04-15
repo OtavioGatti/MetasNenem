@@ -51,6 +51,9 @@ async function initializeAuth() {
                 gameState.player2.name = PLAYER_NAMES.player2;
             }
             
+            // Sincronizar com Supabase se disponível
+            await syncPlayerToSupabase(existingPlayer);
+            
             return true;
         }
 
@@ -59,6 +62,55 @@ async function initializeAuth() {
     } catch (error) {
         console.error('❌ Erro em initializeAuth:', error);
         return false;
+    }
+}
+
+// Sincronizar player com Supabase
+async function syncPlayerToSupabase(player) {
+    if (!player || !USE_SUPABASE || !supabase) {
+        console.log('⚠️ Supabase não disponível, usando localStorage');
+        return;
+    }
+
+    try {
+        const roomId = typeof getRoomId === 'function' ? getRoomId() : null;
+        if (!roomId) {
+            console.log('⚠️ RoomId não disponível');
+            return;
+        }
+
+        console.log(`🔄 Sincronizando ${player.name} com Supabase (room: ${roomId})`);
+
+        // Atualizar nomes no gameState primeiro
+        if (gameState) {
+            gameState.player1.name = PLAYER_NAMES.player1;
+            gameState.player2.name = PLAYER_NAMES.player2;
+        }
+
+        // Sincronizar ambos os players com Supabase
+        await supabase.upsertPlayer(roomId, 1, {
+            name: PLAYER_NAMES.player1,
+            coins: gameState?.player1?.coins || 0,
+            level: gameState?.player1?.level || 1,
+            streak: gameState?.player1?.streak || 0,
+            tasksCompleted: gameState?.player1?.tasksCompleted || 0,
+            achievements: gameState?.player1?.achievements || [],
+            lastActivityDate: gameState?.player1?.lastActivityDate
+        });
+
+        await supabase.upsertPlayer(roomId, 2, {
+            name: PLAYER_NAMES.player2,
+            coins: gameState?.player2?.coins || 0,
+            level: gameState?.player2?.level || 1,
+            streak: gameState?.player2?.streak || 0,
+            tasksCompleted: gameState?.player2?.tasksCompleted || 0,
+            achievements: gameState?.player2?.achievements || [],
+            lastActivityDate: gameState?.player2?.lastActivityDate
+        });
+
+        console.log(`✅ ${player.name} sincronizado com Supabase`);
+    } catch (error) {
+        console.error('❌ Erro ao sincronizar com Supabase:', error);
     }
 }
 
@@ -91,7 +143,7 @@ function showSimplePlayerSelection() {
             setTimeout(() => modal.classList.add('show'), 10);
 
             // Função global para seleção
-            window.selectPlayerSimple = (id, name) => {
+            window.selectPlayerSimple = async (id, name) => {
                 setCurrentPlayer(id, name);
                 
                 // Aplicar nomes ao gameState
@@ -99,6 +151,9 @@ function showSimplePlayerSelection() {
                     gameState.player1.name = PLAYER_NAMES.player1;
                     gameState.player2.name = PLAYER_NAMES.player2;
                 }
+                
+                // Sincronizar com Supabase
+                await syncPlayerToSupabase({ id, name });
                 
                 modal.classList.remove('show');
                 setTimeout(() => {
